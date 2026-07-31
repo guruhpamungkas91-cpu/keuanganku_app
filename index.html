@@ -202,6 +202,21 @@
             transform: translateY(-3px);
             box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.15);
         }
+
+        @media print {
+            header, footer, .no-print, button, #formContainer, .tab-btn-active {
+                display: none !important;
+            }
+            body {
+                background: white !important;
+                color: black !important;
+            }
+            .card-bg {
+                background: white !important;
+                border: 1px solid #ccc !important;
+                box-shadow: none !important;
+            }
+        }
     </style>
 </head>
 <body class="theme-pure-black min-h-screen flex flex-col justify-between">
@@ -231,10 +246,13 @@
                     </div>
                 </div>
 
-                <!-- Mobile Quick Actions -->
+                <!-- Mobile Actions -->
                 <div class="flex md:hidden items-center gap-2">
                     <button onclick="exportToCSV()" class="p-2 input-bg rounded-lg text-slate-300">
                         <i data-lucide="download" class="w-4 h-4"></i>
+                    </button>
+                    <button onclick="openBackupModal()" class="p-2 input-bg rounded-lg text-slate-300">
+                        <i data-lucide="database" class="w-4 h-4"></i>
                     </button>
                 </div>
             </div>
@@ -245,6 +263,12 @@
                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
                     <span class="text-[11px] font-medium text-slate-300">Auto-Sync Active</span>
                 </div>
+
+                <!-- Backup & Restore Data -->
+                <button onclick="openBackupModal()" title="Backup & Restore Data" class="px-3 py-1.5 rounded-xl input-bg text-slate-300 hover:text-white flex items-center gap-1.5 transition-all">
+                    <i data-lucide="database" class="w-3.5 h-3.5 text-purple-400"></i>
+                    <span class="text-[11px]">Backup</span>
+                </button>
 
                 <!-- Theme Switcher -->
                 <div class="relative">
@@ -289,6 +313,13 @@
                         class="input-bg rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-blue-500 cursor-pointer shadow-sm">
                 </div>
 
+                <!-- Print PDF Button -->
+                <button onclick="window.print()" title="Cetak Laporan / PDF" 
+                    class="px-3.5 py-1.5 rounded-xl input-bg hover:border-blue-500/50 text-blue-400 font-semibold text-xs transition-all flex items-center gap-1.5 shadow-sm">
+                    <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+                    <span>PDF</span>
+                </button>
+
                 <!-- Export CSV Button -->
                 <button onclick="exportToCSV()" title="Unduh CSV" 
                     class="px-3.5 py-1.5 rounded-xl input-bg hover:border-emerald-500/50 text-emerald-400 font-semibold text-xs transition-all flex items-center gap-1.5 shadow-sm">
@@ -308,7 +339,7 @@
 
     <main class="max-w-7xl mx-auto px-4 lg:px-8 mt-6 mb-12 flex-grow w-full">
         
-        <div class="flex items-center gap-2 overflow-x-auto pb-3 mb-6 scrollbar-none border-b border-slate-800/60">
+        <div class="flex items-center gap-2 overflow-x-auto pb-3 mb-6 scrollbar-none border-b border-slate-800/60 no-print">
             <button onclick="switchTab('tab-transaksi')" id="btn-tab-transaksi" 
                 class="tab-btn-active px-4 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2 input-bg text-slate-400">
                 <i data-lucide="plus-circle" class="w-4 h-4"></i>
@@ -334,10 +365,22 @@
                 <span>4. Dana Darurat & Impian</span>
             </button>
 
+            <button onclick="switchTab('tab-hutang')" id="btn-tab-hutang" 
+                class="px-4 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2 input-bg text-slate-400">
+                <i data-lucide="credit-card" class="w-4 h-4"></i>
+                <span>5. Hutang & Piutang</span>
+            </button>
+
+            <button onclick="switchTab('tab-subskripsi')" id="btn-tab-subskripsi" 
+                class="px-4 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2 input-bg text-slate-400">
+                <i data-lucide="repeat" class="w-4 h-4"></i>
+                <span>6. Tagihan Berulang</span>
+            </button>
+
             <button onclick="switchTab('tab-rekap')" id="btn-tab-rekap" 
                 class="px-4 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2 input-bg text-slate-400">
                 <i data-lucide="file-text" class="w-4 h-4"></i>
-                <span>5. Rekap Tahunan</span>
+                <span>7. Rekap Tahunan</span>
             </button>
         </div>
 
@@ -347,7 +390,7 @@
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 
                 <!-- LEFT PANEL: FORM TAMBAH / EDIT TRANSAKSI -->
-                <div class="lg:col-span-5">
+                <div class="lg:col-span-5 no-print">
                     <div class="card-bg p-6 rounded-2xl border shadow-xl relative overflow-hidden transition-all duration-300">
                         
                         <div onclick="toggleFormVisibility()" class="flex items-center justify-between cursor-pointer group select-none mb-4">
@@ -461,7 +504,7 @@
                                     <p class="text-xs text-slate-400 mt-0.5" id="txSummaryPeriodText">Menampilkan transaksi periode</p>
                                 </div>
 
-                                <div class="flex flex-wrap items-center gap-2">
+                                <div class="flex flex-wrap items-center gap-2 no-print">
                                     <div class="relative flex-1 sm:w-36">
                                         <input type="text" id="searchKeyword" oninput="renderTransactions()" placeholder="Cari transaksi..." 
                                             class="w-full input-bg rounded-xl px-3 py-2 text-[11px] placeholder-slate-500 focus:outline-none focus:border-blue-500">
@@ -498,7 +541,7 @@
                                             <th class="py-3 px-3">DOMPET</th>
                                             <th class="py-3 px-3">KATEGORI</th>
                                             <th class="py-3 px-3 text-right">NOMINAL</th>
-                                            <th class="py-3 px-3 text-center">AKSI</th>
+                                            <th class="py-3 px-3 text-center no-print">AKSI</th>
                                         </tr>
                                     </thead>
                                     <tbody id="transactionTableBody" class="divide-y divide-slate-800/60 font-medium">
@@ -746,7 +789,82 @@
             </div>
         </div>
 
-        <!-- ================= TAB 5: REKAP TAHUNAN ================= -->
+        <!-- ================= TAB 5: HUTANG & PIUTANG ================= -->
+        <div id="tab-hutang" class="tab-content hidden space-y-6">
+            <div class="card-bg p-6 rounded-2xl border shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-base font-bold text-white flex items-center gap-2">
+                        <i data-lucide="credit-card" class="w-5 h-5 text-amber-400"></i>
+                        <span>Pencatatan Hutang & Piutang</span>
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-1">Pantau kewajiban hutang kamu dan piutang yang belum dilunasi oleh pihak lain.</p>
+                </div>
+                <button onclick="openDebtModal()" class="px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs flex items-center gap-2 shadow-lg shadow-amber-600/20 transition-all">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                    <span>Tambah Catatan Hutang/Piutang</span>
+                </button>
+            </div>
+
+            <!-- KPI Summary Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="card-bg p-5 rounded-2xl border border-rose-500/30">
+                    <span class="text-[11px] font-bold text-rose-400 uppercase tracking-wider block mb-1">TOTAL HUTANG KITA (Kewajiban)</span>
+                    <h3 class="text-2xl font-black text-rose-400" id="totalDebtAmount">Rp 0</h3>
+                    <p class="text-[11px] text-slate-400 mt-1 font-medium">Uang yang harus kamu bayarkan ke orang lain</p>
+                </div>
+                <div class="card-bg p-5 rounded-2xl border border-emerald-500/30">
+                    <span class="text-[11px] font-bold text-emerald-400 uppercase tracking-wider block mb-1">TOTAL PIUTANG KITA (Tagihan)</span>
+                    <h3 class="text-2xl font-black text-emerald-400" id="totalReceivableAmount">Rp 0</h3>
+                    <p class="text-[11px] text-slate-400 mt-1 font-medium">Uang orang lain yang dipinjam dari kamu</p>
+                </div>
+            </div>
+
+            <!-- Debt / Receivable Table -->
+            <div class="card-bg p-6 rounded-2xl border shadow-xl">
+                <h3 class="text-sm font-bold text-white mb-4">Daftar Catatan Active</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead>
+                            <tr class="text-[10px] text-slate-400 font-bold uppercase tracking-wider border-b border-slate-800 input-bg">
+                                <th class="p-3">JENIS</th>
+                                <th class="p-3">PIHAK TERKAIT</th>
+                                <th class="p-3">DESKRIPSI</th>
+                                <th class="p-3">NOMINAL</th>
+                                <th class="p-3">JATUH TEMPO</th>
+                                <th class="p-3">STATUS</th>
+                                <th class="p-3 text-center">AKSI</th>
+                            </tr>
+                        </thead>
+                        <tbody id="debtTableBody" class="divide-y divide-slate-800/60 font-medium">
+                            <!-- Dynamic -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TAB 6: TAGIHAN BERULANG ================= -->
+        <div id="tab-subskripsi" class="tab-content hidden space-y-6">
+            <div class="card-bg p-6 rounded-2xl border shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-base font-bold text-white flex items-center gap-2">
+                        <i data-lucide="repeat" class="w-5 h-5 text-indigo-400"></i>
+                        <span>Tagihan Rutin & Subskripsi Langganan</span>
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-1">Kelola tagihan bulanan seperti Kos, Wi-Fi, Netflix, Spotify, Token Listrik, dll.</p>
+                </div>
+                <button onclick="openSubModal()" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs flex items-center gap-2 shadow-lg shadow-indigo-600/20 transition-all">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                    <span>Tambah Tagihan Rutin</span>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="subsContainer">
+                <!-- Dynamically populated -->
+            </div>
+        </div>
+
+        <!-- ================= TAB 7: REKAP TAHUNAN ================= -->
         <div id="tab-rekap" class="tab-content hidden space-y-6">
             
             <!-- 4 PRO KPI TOP CARDS -->
@@ -868,8 +986,109 @@
         </div>
     </div>
 
+    <!-- MODAL HUTANG & PIUTANG -->
+    <div id="debtModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="card-bg border rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <h3 class="text-base font-bold text-white">Tambah Hutang / Piutang</h3>
+            <form onsubmit="handleSaveDebt(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs text-slate-300 mb-1">Jenis Catatan</label>
+                    <select id="debtType" class="w-full input-bg rounded-xl p-2.5 text-xs">
+                        <option value="hutang">🔴 Hutang Kita (Utang Saya ke Orang)</option>
+                        <option value="piutang">🟢 Piutang Kita (Orang Utang ke Saya)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-300 mb-1">Pihak Terkait (Nama Orang/Lembaga)</label>
+                    <input type="text" id="debtPerson" required placeholder="Contoh: Budi / Bank / Teman" class="w-full input-bg rounded-xl p-2.5 text-xs">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-300 mb-1">Deskripsi Transaksi</label>
+                    <input type="text" id="debtTitle" required placeholder="Contoh: Pinjaman Uang Kas, Talangan Bensin" class="w-full input-bg rounded-xl p-2.5 text-xs">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-300 mb-1">Nominal (Rp)</label>
+                    <input type="number" id="debtAmount" min="1000" required placeholder="500000" class="w-full input-bg rounded-xl p-2.5 text-xs">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-300 mb-1">Tanggal Jatuh Tempo</label>
+                    <input type="date" id="debtDueDate" required class="w-full input-bg rounded-xl p-2.5 text-xs">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeDebtModal()" class="px-4 py-2 rounded-xl input-bg text-slate-300 text-xs">Batal</button>
+                    <button type="submit" class="px-4 py-2 rounded-xl bg-amber-600 text-white font-semibold text-xs">Simpan Catatan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL SUBSKRIPSI -->
+    <div id="subModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="card-bg border rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <h3 class="text-base font-bold text-white">Tambah Tagihan Rutin / Langganan</h3>
+            <form onsubmit="handleSaveSub(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs text-slate-300 mb-1">Nama Layanan / Tagihan</label>
+                    <input type="text" id="subName" required placeholder="Contoh: Wi-Fi Indihome, Kos Bulanan, Netflix" class="w-full input-bg rounded-xl p-2.5 text-xs">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-300 mb-1">Nominal Tagihan (Rp)</label>
+                    <input type="number" id="subAmount" min="1000" required placeholder="300000" class="w-full input-bg rounded-xl p-2.5 text-xs">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-300 mb-1">Tanggal Tagihan Setiap Bulan (1-31)</label>
+                    <input type="number" id="subDay" min="1" max="31" required placeholder="10" class="w-full input-bg rounded-xl p-2.5 text-xs">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-300 mb-1">Dompet Pembayaran Default</label>
+                    <select id="subWallet" class="w-full input-bg rounded-xl p-2.5 text-xs">
+                        <option value="Bank BCA">Bank BCA</option>
+                        <option value="ShopeePay">ShopeePay</option>
+                        <option value="GoPay">GoPay</option>
+                        <option value="Tunai / Cash">Tunai / Cash</option>
+                    </select>
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeSubModal()" class="px-4 py-2 rounded-xl input-bg text-slate-300 text-xs">Batal</button>
+                    <button type="submit" class="px-4 py-2 rounded-xl bg-indigo-600 text-white font-semibold text-xs">Simpan Tagihan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL BACKUP & RESTORE DATA -->
+    <div id="backupModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="card-bg border rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <i data-lucide="database" class="w-5 h-5 text-purple-400"></i>
+                <span>Backup & Restore Data Keuangan</span>
+            </h3>
+            <p class="text-xs text-slate-400">Simpan cadangan data aplikasi ke file JSON atau pulihkan data dari file JSON cadangan kamu.</p>
+            
+            <div class="space-y-3 pt-2">
+                <button onclick="downloadBackupJSON()" class="w-full py-3 px-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold flex items-center justify-center gap-2 shadow-lg shadow-purple-600/20">
+                    <i data-lucide="download" class="w-4 h-4"></i>
+                    <span>Download Backup Data (JSON)</span>
+                </button>
+
+                <div class="border-t border-slate-800 pt-3">
+                    <label class="block text-xs font-semibold text-slate-300 mb-2">Restore Data dari File JSON:</label>
+                    <input type="file" id="restoreFile" accept=".json" class="w-full input-bg rounded-xl p-2 text-xs text-slate-300">
+                    <button onclick="restoreFromJSON()" class="w-full mt-2 py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center justify-center gap-2">
+                        <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+                        <span>Upload & Restore Data</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex justify-end pt-2">
+                <button type="button" onclick="closeBackupModal()" class="px-4 py-2 rounded-xl input-bg text-slate-300 text-xs">Tutup</button>
+            </div>
+        </div>
+    </div>
+
     <!-- FOOTER -->
-    <footer class="border-t border-slate-800/60 py-4 text-center text-xs text-slate-500">
+    <footer class="border-t border-slate-800/60 py-4 text-center text-xs text-slate-500 no-print">
         <p>KeuanganKu PRO EDITION &copy; 2026 — Financial Management System</p>
     </footer>
 
@@ -908,6 +1127,17 @@
             { id: 2, title: "Beli Laptop / Gadget", target: 15000000, current: 6200000, category: "Gadget & Laptop" }
         ];
 
+        const defaultDebts = [
+            { id: 1, type: "hutang", person: "Budi Santoso", title: "Pinjaman Beli Suku Cadang", amount: 350000, dueDate: "2026-08-15", status: "Belum Lunas" },
+            { id: 2, type: "piutang", person: "Andi Rian", title: "Talangan Tiket Event", amount: 150000, dueDate: "2026-08-05", status: "Belum Lunas" }
+        ];
+
+        const defaultSubscriptions = [
+            { id: 1, name: "Kos Bulanan", amount: 850000, day: 1, wallet: "Bank BCA" },
+            { id: 2, name: "Wi-Fi Indihome", amount: 310000, day: 10, wallet: "ShopeePay" },
+            { id: 3, name: "Netflix Premium", amount: 186000, day: 20, wallet: "GoPay" }
+        ];
+
         const categoriesMap = {
             pemasukan: ["Gaji Utama", "Pekerjaan / Bisnis", "Bonus & Sampingan", "Transfer Masuk", "Lain-lain"],
             pengeluaran_tetap: ["Sewa Kos / Kontrakan", "Wi-Fi & Internet", "Tagihan Listrik & Air", "Cicilan / Paylater", "Asuransi", "Pengeluaran Tetap Lainnya"],
@@ -919,6 +1149,8 @@
         let transactions = JSON.parse(localStorage.getItem('keuanganku_txs_v4')) || defaultSampleData;
         let budgets = JSON.parse(localStorage.getItem('keuanganku_budgets_v4')) || defaultBudgets;
         let goals = JSON.parse(localStorage.getItem('keuanganku_goals_v4')) || defaultGoals;
+        let debts = JSON.parse(localStorage.getItem('keuanganku_debts_v4')) || defaultDebts;
+        let subscriptions = JSON.parse(localStorage.getItem('keuanganku_subs_v4')) || defaultSubscriptions;
         let currentTheme = localStorage.getItem('keuanganku_theme_v4') || 'theme-pure-black';
         
         let categoryChartInstance = null;
@@ -939,6 +1171,8 @@
             renderReports();
             renderYearlyRecap();
             renderGoals();
+            renderDebts();
+            renderSubscriptions();
             lucide.createIcons();
         };
 
@@ -1139,14 +1373,22 @@
             localStorage.setItem('keuanganku_txs_v4', JSON.stringify(transactions));
             localStorage.setItem('keuanganku_budgets_v4', JSON.stringify(budgets));
             localStorage.setItem('keuanganku_goals_v4', JSON.stringify(goals));
+            localStorage.setItem('keuanganku_debts_v4', JSON.stringify(debts));
+            localStorage.setItem('keuanganku_subs_v4', JSON.stringify(subscriptions));
         }
 
         function resetDataToDefault() {
             transactions = [...defaultSampleData];
+            budgets = [...defaultBudgets];
+            goals = [...defaultGoals];
+            debts = [...defaultDebts];
+            subscriptions = [...defaultSubscriptions];
             saveData();
             renderTransactions();
             renderReports();
             renderYearlyRecap();
+            renderDebts();
+            renderSubscriptions();
             showToast("Data demo berhasil dimuat ulang!", "info");
         }
 
@@ -1206,7 +1448,7 @@
                     <td class="py-3 px-3 text-right whitespace-nowrap ${amountClass}">
                         ${amountSign} ${formatRp(t.amount)}
                     </td>
-                    <td class="py-3 px-3 text-center whitespace-nowrap flex items-center justify-center gap-1">
+                    <td class="py-3 px-3 text-center whitespace-nowrap flex items-center justify-center gap-1 no-print">
                         <button onclick="editTransaction(${t.id})" title="Edit Transaksi" class="p-1 text-slate-400 hover:text-blue-400 rounded-lg transition-all">
                             <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
                         </button>
@@ -1236,6 +1478,8 @@
             if (tabId === 'tab-laporan') renderReports();
             else if (tabId === 'tab-target') renderBudgets();
             else if (tabId === 'tab-darurat') renderGoals();
+            else if (tabId === 'tab-hutang') renderDebts();
+            else if (tabId === 'tab-subskripsi') renderSubscriptions();
             else if (tabId === 'tab-rekap') renderYearlyRecap();
         }
 
@@ -1546,6 +1790,238 @@
                 closeDepositModal();
                 showToast("Setoran tabungan berhasil dicatat!", "success");
             }
+        }
+
+        function openDebtModal() { document.getElementById('debtModal').classList.remove('hidden'); }
+        function closeDebtModal() { document.getElementById('debtModal').classList.add('hidden'); }
+        function handleSaveDebt(e) {
+            e.preventDefault();
+            const type = document.getElementById('debtType').value;
+            const person = document.getElementById('debtPerson').value;
+            const title = document.getElementById('debtTitle').value;
+            const amount = parseFloat(document.getElementById('debtAmount').value);
+            const dueDate = document.getElementById('debtDueDate').value;
+
+            debts.push({ id: Date.now(), type, person, title, amount, dueDate, status: "Belum Lunas" });
+            saveData();
+            renderDebts();
+            closeDebtModal();
+            showToast("Catatan hutang/piutang disimpan!", "success");
+        }
+
+        function toggleDebtStatus(id) {
+            const d = debts.find(item => item.id === id);
+            if (d) {
+                d.status = d.status === "Lunas" ? "Belum Lunas" : "Lunas";
+                saveData();
+                renderDebts();
+                showToast(`Status diubah menjadi: ${d.status}`, "info");
+            }
+        }
+
+        function deleteDebt(id) {
+            debts = debts.filter(item => item.id !== id);
+            saveData();
+            renderDebts();
+            showToast("Catatan hutang/piutang dihapus", "info");
+        }
+
+        function renderDebts() {
+            const tbody = document.getElementById('debtTableBody');
+            tbody.innerHTML = '';
+
+            let totalDebt = 0;
+            let totalReceivable = 0;
+
+            debts.forEach(d => {
+                if (d.status === "Belum Lunas") {
+                    if (d.type === "hutang") totalDebt += d.amount;
+                    else totalReceivable += d.amount;
+                }
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-800/30 transition-colors";
+
+                const isHutang = d.type === "hutang";
+                const badgeType = isHutang 
+                    ? '<span class="px-2 py-0.5 rounded text-[10px] bg-rose-500/20 text-rose-400 font-bold border border-rose-500/30">HUTANG</span>'
+                    : '<span class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30">PIUTANG</span>';
+
+                const statusBadge = d.status === "Lunas"
+                    ? '<span class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-400 font-bold">LUNAS</span>'
+                    : '<span class="px-2 py-0.5 rounded text-[10px] bg-amber-500/20 text-amber-400 font-bold">BELUM LUNAS</span>';
+
+                tr.innerHTML = `
+                    <td class="p-3 whitespace-nowrap">${badgeType}</td>
+                    <td class="p-3 font-semibold text-white">${d.person}</td>
+                    <td class="p-3 text-slate-300">${d.title}</td>
+                    <td class="p-3 font-bold ${isHutang ? 'text-rose-400' : 'text-emerald-400'}">${formatRp(d.amount)}</td>
+                    <td class="p-3 font-mono text-slate-400">${formatDateID(d.dueDate)}</td>
+                    <td class="p-3">${statusBadge}</td>
+                    <td class="p-3 text-center whitespace-nowrap flex items-center justify-center gap-1">
+                        <button onclick="toggleDebtStatus(${d.id})" class="px-2 py-1 rounded-lg bg-slate-800 text-slate-200 hover:text-white text-[10px] font-semibold">
+                            ${d.status === 'Lunas' ? 'Tandai Belum' : 'Tandai Lunas'}
+                        </button>
+                        <button onclick="deleteDebt(${d.id})" class="p-1 text-slate-400 hover:text-rose-400">
+                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('totalDebtAmount').textContent = formatRp(totalDebt);
+            document.getElementById('totalReceivableAmount').textContent = formatRp(totalReceivable);
+            lucide.createIcons();
+        }
+
+        function openSubModal() { document.getElementById('subModal').classList.remove('hidden'); }
+        function closeSubModal() { document.getElementById('subModal').classList.add('hidden'); }
+        function handleSaveSub(e) {
+            e.preventDefault();
+            const name = document.getElementById('subName').value;
+            const amount = parseFloat(document.getElementById('subAmount').value);
+            const day = parseInt(document.getElementById('subDay').value, 10);
+            const wallet = document.getElementById('subWallet').value;
+
+            subscriptions.push({ id: Date.now(), name, amount, day, wallet });
+            saveData();
+            renderSubscriptions();
+            closeSubModal();
+            showToast("Tagihan rutin berhasil ditambahkan!", "success");
+        }
+
+        function paySubNow(id) {
+            const sub = subscriptions.find(s => s.id === id);
+            if (!sub) return;
+
+            const today = new Date().toISOString().split('T')[0];
+            const newTx = {
+                id: Date.now(),
+                type: "pengeluaran_tetap",
+                title: `Bayar Langganan: ${sub.name}`,
+                amount: sub.amount,
+                wallet: sub.wallet,
+                category: "Sewa Kos / Kontrakan",
+                date: today
+            };
+
+            transactions.unshift(newTx);
+            saveData();
+            renderTransactions();
+            renderReports();
+            showToast(`Tagihan ${sub.name} berhasil dibayar & dicatat di transaksi!`, "success");
+        }
+
+        function deleteSub(id) {
+            subscriptions = subscriptions.filter(s => s.id !== id);
+            saveData();
+            renderSubscriptions();
+            showToast("Tagihan rutin dihapus", "info");
+        }
+
+        function renderSubscriptions() {
+            const container = document.getElementById('subsContainer');
+            container.innerHTML = '';
+
+            subscriptions.forEach(s => {
+                const card = document.createElement('div');
+                card.className = "card-bg p-5 rounded-2xl border shadow-xl flex flex-col justify-between hover-card-effect space-y-4";
+                card.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-9 h-9 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-xs">
+                                Tgl ${s.day}
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-bold text-white">${s.name}</h4>
+                                <span class="text-[10px] text-slate-400">${s.wallet}</span>
+                            </div>
+                        </div>
+                        <button onclick="deleteSub(${s.id})" class="p-1 text-slate-500 hover:text-rose-400">
+                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+
+                    <div class="flex items-center justify-between pt-2 border-t border-slate-800">
+                        <div>
+                            <span class="text-[10px] text-slate-400 block">Nominal Tagihan</span>
+                            <span class="text-base font-extrabold text-indigo-400">${formatRp(s.amount)}</span>
+                        </div>
+                        <button onclick="paySubNow(${s.id})" class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs flex items-center gap-1.5 shadow-md shadow-indigo-600/20">
+                            <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                            <span>Bayar Sekarang</span>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        function openBackupModal() { document.getElementById('backupModal').classList.remove('hidden'); }
+        function closeBackupModal() { document.getElementById('backupModal').classList.add('hidden'); }
+
+        function downloadBackupJSON() {
+            const backupData = {
+                transactions,
+                budgets,
+                goals,
+                debts,
+                subscriptions,
+                version: "4.0",
+                exportedAt: new Date().toISOString()
+            };
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
+            const dlAnchor = document.createElement('a');
+            dlAnchor.setAttribute("href", dataStr);
+            dlAnchor.setAttribute("download", `keuanganku_backup_${new Date().toISOString().split('T')[0]}.json`);
+            document.body.appendChild(dlAnchor);
+            dlAnchor.click();
+            dlAnchor.remove();
+
+            showToast("Backup JSON berhasil diunduh!", "success");
+        }
+
+        function restoreFromJSON() {
+            const fileInput = document.getElementById('restoreFile');
+            if (!fileInput.files || fileInput.files.length === 0) {
+                showToast("Pilih file JSON backup terlebih dahulu!", "error");
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.transactions && Array.isArray(data.transactions)) {
+                        transactions = data.transactions;
+                        if (data.budgets) budgets = data.budgets;
+                        if (data.goals) goals = data.goals;
+                        if (data.debts) debts = data.debts;
+                        if (data.subscriptions) subscriptions = data.subscriptions;
+
+                        saveData();
+                        renderTransactions();
+                        renderReports();
+                        renderYearlyRecap();
+                        renderGoals();
+                        renderDebts();
+                        renderSubscriptions();
+                        closeBackupModal();
+                        showToast("Data berhasil dipulihkan secara penuh!", "success");
+                    } else {
+                        showToast("Format file JSON tidak valid!", "error");
+                    }
+                } catch (err) {
+                    showToast("Gagal membaca file JSON!", "error");
+                }
+            };
+
+            reader.readAsText(file);
         }
 
         function renderYearlyRecap() {
