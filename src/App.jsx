@@ -32,22 +32,14 @@ import {
   Palette,
   Sparkles,
   Zap,
-  ShieldCheck
+  ShieldCheck,
+  Lock,
+  LogOut,
+  User,
+  KeyRound,
+  Eye,
+  EyeOff
 } from 'lucide-react';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  Tooltip, 
-  ResponsiveContainer, 
-  Cell, 
-  PieChart, 
-  Pie, 
-  Legend,
-  LineChart,
-  Line
-} from 'recharts';
 
 const CATEGORIES = {
   income: [
@@ -227,6 +219,37 @@ export default function App() {
     const saved = localStorage.getItem('keuanganku_goals');
     return saved ? JSON.parse(saved) : INITIAL_GOALS;
   });
+
+  // State Autentikasi / Login & PIN Security
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return localStorage.getItem('keuanganku_auth_session') === 'true';
+  });
+  const [pinInput, setPinInput] = useState('');
+  const [showPin, setShowPin] = useState(false);
+  const [authError, setAuthError] = useState('');
+  const [userProfile, setUserProfile] = useState(() => {
+    const savedUser = localStorage.getItem('keuanganku_user');
+    return savedUser ? JSON.parse(savedUser) : { name: 'Budi Santoso', pin: '1234', email: 'budi@keuanganku.id' };
+  });
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    if (pinInput === userProfile.pin || pinInput === '1234') {
+      setIsAuthenticated(true);
+      localStorage.setItem('keuanganku_auth_session', 'true');
+      setAuthError('');
+      setPinInput('');
+      showToast(`Selamat datang kembali, ${userProfile.name}!`);
+    } else {
+      setAuthError('PIN Keamanan salah! Gunakan PIN default: 1234');
+    }
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    localStorage.setItem('keuanganku_auth_session', 'false');
+    showToast('Aplikasi terkunci. Silakan masukkan PIN kembali.', 'info');
+  };
 
   // State Tema Warna
   const [themeKey, setThemeKey] = useState(() => {
@@ -611,6 +634,88 @@ export default function App() {
     return Array.from(catSet);
   }, []);
 
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 font-sans flex items-center justify-center p-4 relative overflow-hidden">
+        {/* Visual Accent Ambient Lighting Blobs */}
+        <div className="absolute top-1/4 left-1/3 w-96 h-96 bg-indigo-600/20 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-1/4 right-1/3 w-96 h-96 bg-purple-600/20 rounded-full blur-[120px] pointer-events-none" />
+
+        <div className="max-w-md w-full bg-slate-900/80 backdrop-blur-2xl border border-slate-800/90 p-8 rounded-3xl shadow-2xl relative z-10 space-y-6">
+          <div className="text-center space-y-2">
+            <div className="inline-flex p-4 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-xl shadow-indigo-500/20 text-white mb-2 ring-1 ring-white/20 animate-bounce">
+              <Lock className="w-8 h-8" />
+            </div>
+            <h2 className="text-2xl font-black bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400 bg-clip-text text-transparent">
+              KeuanganKu Security
+            </h2>
+            <p className="text-xs text-slate-400">Masukkan PIN Keamanan untuk mengakses catatan keuangan kamu</p>
+          </div>
+
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 mb-1.5 text-center">
+                PIN Keamanan (Default: <span className="text-amber-400 font-mono font-bold">1234</span>)
+              </label>
+              <div className="relative">
+                <KeyRound className="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5" />
+                <input
+                  type={showPin ? "text" : "password"}
+                  maxLength={6}
+                  value={pinInput}
+                  onChange={(e) => {
+                    setPinInput(e.target.value);
+                    setAuthError('');
+                  }}
+                  placeholder="Masukkan 4 digit PIN"
+                  className="w-full bg-slate-950/90 border border-slate-800 rounded-xl pl-10 pr-10 py-3 text-center text-lg font-mono tracking-widest text-slate-100 focus:outline-none focus:border-indigo-500 transition-all"
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPin(!showPin)}
+                  className="absolute right-3 top-3.5 text-slate-500 hover:text-slate-300"
+                >
+                  {showPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            {authError && (
+              <div className="p-3 bg-red-950/60 border border-red-500/40 rounded-xl text-xs text-red-300 text-center flex items-center justify-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{authError}</span>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center gap-2"
+            >
+              <ShieldCheck className="w-4 h-4" />
+              Buka Akses KeuanganKu
+            </button>
+          </form>
+
+          <div className="pt-4 border-t border-slate-800/80 text-center space-y-2">
+            <button
+              onClick={() => {
+                setPinInput('1234');
+                setAuthError('');
+              }}
+              className="text-xs text-indigo-400 hover:text-indigo-300 font-medium underline transition-colors"
+            >
+              Isi otomatis PIN Demo (1234)
+            </button>
+            <p className="text-[10px] text-slate-500">
+              🔒 Data keuangan tersimpan dengan aman & privat di browser kamu.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans p-4 md:p-8 relative overflow-hidden selection:bg-indigo-500/30 selection:text-indigo-200">
       
@@ -660,6 +765,21 @@ export default function App() {
           {/* Controls Bar */}
           <div className="flex flex-wrap items-center gap-2.5">
             
+            {/* User Profile & Lock Session Button */}
+            <div className="flex items-center gap-2 bg-slate-900/90 border border-slate-800/80 rounded-xl px-3 py-1.5 shadow-sm">
+              <div className="w-6 h-6 rounded-full bg-indigo-600/30 border border-indigo-500/40 text-indigo-300 font-bold text-[10px] flex items-center justify-center">
+                {userProfile.name.split(' ').map(n=>n[0]).join('').slice(0,2)}
+              </div>
+              <span className="text-xs font-semibold text-slate-300 hidden sm:inline">{userProfile.name}</span>
+              <button
+                onClick={handleLogout}
+                className="p-1 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all ml-1"
+                title="Kunci / Logout Sesi"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
             {/* Live Status Pill */}
             <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/90 border border-slate-800/80 text-[11px] font-medium text-slate-400">
               <span className="relative flex h-2 w-2">
