@@ -536,7 +536,9 @@
                 
                 <div class="lg:col-span-4 no-print">
                     <div class="card-custom rounded-2xl p-5 shadow-xl">
-                        <h3 class="font-bold text-sm mb-4 border-b border-gray-800/50 pb-2">Set Target Anggaran Bulanan</h3>
+                        <h3 class="font-bold text-sm mb-4 border-b border-gray-800/50 pb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-sliders text-blue-500"></i> Set Target Anggaran Bulanan
+                        </h3>
                         <form id="budgetForm" onsubmit="saveBudget(event)" class="space-y-4 text-xs">
                             <input type="hidden" id="budgetId">
                             <div>
@@ -548,8 +550,8 @@
                                 <label class="block mb-1 font-medium text-gray-300">Batas Max Anggaran (Rp)</label>
                                 <input type="number" id="budgetLimit" min="1000" required placeholder="Contoh: 1500000" class="w-full input-custom rounded-xl px-3 py-2 font-bold">
                             </div>
-                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-xl shadow-lg transition">
-                                Simpan Target Anggaran
+                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-xl shadow-lg transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-floppy-disk"></i> Simpan Target Anggaran
                             </button>
                         </form>
                     </div>
@@ -557,7 +559,10 @@
 
                 <div class="lg:col-span-8">
                     <div class="card-custom rounded-2xl p-5 shadow-xl">
-                        <h3 class="font-bold text-sm mb-4">Status Batas Anggaran Bulanan</h3>
+                        <div class="flex items-center justify-between mb-4 border-b border-gray-800/50 pb-3">
+                            <h3 class="font-bold text-sm">Status Batas Anggaran Bulanan</h3>
+                            <span class="text-xs text-gray-400">Monitoring Pemakaian Real-time</span>
+                        </div>
                         <div id="budgetListContainer" class="space-y-4">
                         </div>
                     </div>
@@ -828,7 +833,7 @@
             
             <div class="p-4 border border-dashed border-gray-400/40 rounded-xl space-y-3">
                 <h4 class="font-bold text-blue-500">Download Backup Data</h4>
-                <button onclick="downloadBackupJSON()" class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium shadow">
+                <button onclick="downloadBackupJSON()" class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium shadow flex items-center justify-center gap-2">
                     <i class="fa-solid fa-download"></i> Download File JSON
                 </button>
             </div>
@@ -836,7 +841,7 @@
             <div class="p-4 border border-dashed border-gray-400/40 rounded-xl space-y-3">
                 <h4 class="font-bold text-emerald-500">Restore Data</h4>
                 <input type="file" id="importFileInput" accept=".json" class="w-full text-xs text-gray-400">
-                <button onclick="restoreBackupJSON()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium shadow">
+                <button onclick="restoreBackupJSON()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium shadow flex items-center justify-center gap-2">
                     <i class="fa-solid fa-upload"></i> Restore Sekarang
                 </button>
             </div>
@@ -972,6 +977,91 @@
                 pendingConfirmCallback();
             }
             pendingConfirmCallback = null;
+        }
+
+        function openBackupModal() {
+            document.getElementById('modalBackup').classList.remove('hidden');
+        }
+
+        function closeBackupModal() {
+            document.getElementById('modalBackup').classList.add('hidden');
+        }
+
+        function downloadBackupJSON() {
+            const backupData = {
+                transactions,
+                budgets,
+                goals,
+                debts,
+                recurrings,
+                selectedPeriod,
+                theme: localStorage.getItem('keuanganku_theme') || 'dark-cyber',
+                exportDate: new Date().toISOString()
+            };
+            const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `KeuanganKu_Backup_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showToast('Backup berhasil diunduh!');
+        }
+
+        function restoreBackupJSON() {
+            const input = document.getElementById('importFileInput');
+            if (!input.files || !input.files[0]) {
+                showToast('Pilih file backup JSON terlebih dahulu', 'error');
+                return;
+            }
+            const file = input.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.transactions) transactions = data.transactions;
+                    if (data.budgets) budgets = data.budgets;
+                    if (data.goals) goals = data.goals;
+                    if (data.debts) debts = data.debts;
+                    if (data.recurrings) recurrings = data.recurrings;
+                    if (data.selectedPeriod) selectedPeriod = data.selectedPeriod;
+
+                    saveData();
+                    populateFilterOptions();
+                    populateBudgetKategoriSelect();
+                    renderAll();
+                    closeBackupModal();
+                    showToast('Data berhasil dipulihkan!');
+                } catch (err) {
+                    showToast('Format file JSON tidak valid', 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function exportCSV() {
+            if (!transactions.length) {
+                showToast('Tidak ada data transaksi untuk diexport', 'error');
+                return;
+            }
+            let csv = 'ID,Tanggal,Jenis,Judul,Dompet,Kategori,Nominal\n';
+            transactions.forEach(t => {
+                csv += `"${t.id}","${t.tanggal}","${t.jenis}","${t.judul.replace(/"/g, '""')}","${t.dompet}","${t.kategori}",${t.nominal}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `KeuanganKu_Export_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast('Data berhasil diexport ke CSV');
+        }
+
+        function exportPDF() {
+            window.print();
         }
 
         function switchTheme(themeName) {
@@ -1424,15 +1514,23 @@
             const kategori = document.getElementById('budgetKategori').value;
             const limit = parseFloat(document.getElementById('budgetLimit').value) || 0;
 
-            if(!kategori || limit <= 0) return;
+            if (!kategori || limit <= 0) return;
 
-            if(id) {
+            if (id) {
                 const idx = budgets.findIndex(b => b.id === id);
-                if(idx !== -1) budgets[idx] = { id, kategori, limit };
-                showToast('Target anggaran diperbarui');
+                if (idx !== -1) {
+                    budgets[idx] = { id, kategori, limit };
+                    showToast('Target anggaran diperbarui');
+                }
             } else {
-                budgets.push({ id: 'b_' + Date.now(), kategori, limit });
-                showToast('Target anggaran ditambahkan');
+                const existingIdx = budgets.findIndex(b => b.kategori === kategori);
+                if (existingIdx !== -1) {
+                    budgets[existingIdx].limit = limit;
+                    showToast(`Target anggaran untuk ${kategori} diperbarui`);
+                } else {
+                    budgets.push({ id: 'b_' + Date.now(), kategori, limit });
+                    showToast('Target anggaran ditambahkan');
+                }
             }
 
             saveData();
@@ -1447,6 +1545,7 @@
             document.getElementById('budgetId').value = b.id;
             document.getElementById('budgetKategori').value = b.kategori;
             document.getElementById('budgetLimit').value = b.limit;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function deleteBudget(id) {
@@ -1466,44 +1565,64 @@
             const currentPeriodTxs = transactions.filter(t => t.tanggal.startsWith(selectedPeriod) && t.jenis !== "Pemasukkan");
 
             if(budgets.length === 0) {
-                container.innerHTML = '<p class="text-gray-400 text-xs">Belum ada target anggaran yang dibuat.</p>';
+                container.innerHTML = `
+                    <div class="text-center py-8 text-gray-400">
+                        <i class="fa-solid fa-sliders text-2xl mb-2 block text-gray-500"></i>
+                        <p class="text-xs">Belum ada target anggaran yang dibuat.</p>
+                    </div>
+                `;
                 return;
             }
 
             budgets.forEach(b => {
-                // FIXED LOGIC: Make sure it's accurately matching current month and category
                 const actualSpent = currentPeriodTxs
                     .filter(t => t.kategori === b.kategori)
                     .reduce((acc, curr) => acc + curr.nominal, 0);
-                    
-                const rawPct = Math.round((actualSpent / b.limit) * 100);
+
+                const rawPct = b.limit > 0 ? Math.round((actualSpent / b.limit) * 100) : 0;
                 const clampedPct = Math.min(100, rawPct);
 
                 let barColor = 'bg-emerald-500';
                 let textColor = 'text-emerald-500';
+                let statusBadge = '<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-500">Aman</span>';
+
                 if(rawPct > 80 && rawPct <= 100) { 
                     barColor = 'bg-amber-500'; 
                     textColor = 'text-amber-500'; 
+                    statusBadge = '<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-500">Mendekati Limit</span>';
                 } else if(rawPct > 100) { 
                     barColor = 'bg-rose-500'; 
                     textColor = 'text-rose-500'; 
+                    statusBadge = '<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-500">Melebihi Target!</span>';
                 }
 
+                const remaining = b.limit - actualSpent;
+
                 container.innerHTML += `
-                    <div class="card-custom p-4 rounded-xl space-y-2 border border-gray-800">
-                        <div class="flex items-center justify-between text-xs">
-                            <div>
-                                <span class="font-bold text-gray-200">${b.kategori}</span>
-                                <span class="text-[10px] text-gray-400 block font-mono">Terpakai: ${formatRp(actualSpent)} / ${formatRp(b.limit)}</span>
-                            </div>
+                    <div class="card-custom p-4 rounded-xl space-y-3 border border-gray-800 hover:border-gray-700 transition">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                             <div class="flex items-center gap-2">
-                                <span class="font-bold ${textColor}">${rawPct}% ${rawPct > 100 ? '(Over Budget!)' : ''}</span>
-                                <button onclick="editBudget('${b.id}')" class="text-blue-500 hover:text-blue-400 p-1 no-print"><i class="fa-solid fa-pen-to-square"></i></button>
-                                <button onclick="deleteBudget('${b.id}')" class="text-rose-500 hover:text-rose-400 p-1 no-print"><i class="fa-solid fa-trash"></i></button>
+                                <span class="font-bold text-gray-200 text-sm">${b.kategori}</span>
+                                ${statusBadge}
+                            </div>
+                            <div class="flex items-center gap-2 no-print">
+                                <button onclick="editBudget('${b.id}')" class="text-blue-500 hover:text-blue-400 p-1 text-xs" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
+                                <button onclick="deleteBudget('${b.id}')" class="text-rose-500 hover:text-rose-400 p-1 text-xs" title="Hapus"><i class="fa-solid fa-trash"></i></button>
                             </div>
                         </div>
-                        <div class="w-full bg-gray-800/30 rounded-full h-2 overflow-hidden">
-                            <div class="${barColor} h-2 rounded-full transition-all duration-500" style="width: ${clampedPct}%"></div>
+
+                        <div class="flex items-baseline justify-between text-xs">
+                            <span class="text-gray-400">Terpakai: <strong class="${textColor} font-mono">${formatRp(actualSpent)}</strong></span>
+                            <span class="text-gray-400">Limit: <strong class="text-gray-200 font-mono">${formatRp(b.limit)}</strong></span>
+                        </div>
+
+                        <div class="w-full bg-gray-800/40 rounded-full h-2.5 overflow-hidden">
+                            <div class="${barColor} h-2.5 rounded-full transition-all duration-500" style="width: ${clampedPct}%"></div>
+                        </div>
+
+                        <div class="flex justify-between items-center text-[11px] font-mono">
+                            <span class="${textColor} font-bold">${rawPct}% Terpakai</span>
+                            <span class="text-gray-400">${remaining >= 0 ? 'Sisa: ' + formatRp(remaining) : 'Over: ' + formatRp(Math.abs(remaining))}</span>
                         </div>
                     </div>
                 `;
@@ -1724,7 +1843,6 @@
             document.getElementById('netDebtVal').textContent = formatRp(totalPiutang - totalHutang);
         }
 
-        // --- Recurrings logic ---
         function saveRecurring(e) {
             e.preventDefault();
             const id = document.getElementById('recId').value;
@@ -1773,7 +1891,6 @@
             const r = recurrings.find(x => x.id === id);
             if(!r) return;
             
-            // Populate Tx form
             document.getElementById('txJenis').value = "Pengeluaran Tetap";
             updateCategoriesOptions();
             document.getElementById('txJudul').value = `Bayar: ${r.name}`;
@@ -1781,7 +1898,6 @@
             document.getElementById('txDompet').value = r.dompet;
             document.getElementById('txTanggal').value = new Date().toISOString().split('T')[0];
             
-            // Attempt to auto-select category if matching
             const katSelect = document.getElementById('txKategori');
             for(let i=0; i<katSelect.options.length; i++) {
                 if(r.name.toLowerCase().includes('kost') || r.name.toLowerCase().includes('sewa')) {
@@ -1834,7 +1950,6 @@
             });
         }
 
-        // --- Annual Summary ---
         function renderAnnualSummary() {
             const year = document.getElementById('rekapYearSelect').value;
             const months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'];
@@ -1911,7 +2026,7 @@
                             backgroundColor: 'rgba(16, 185, 129, 0.1)',
                             borderWidth: 2,
                             fill: true,
-                            tension: 0.4
+                            tension: 0.3
                         },
                         {
                             label: 'Pengeluaran',
@@ -1920,7 +2035,7 @@
                             backgroundColor: 'rgba(239, 68, 68, 0.1)',
                             borderWidth: 2,
                             fill: true,
-                            tension: 0.4
+                            tension: 0.3
                         }
                     ]
                 },
@@ -1928,7 +2043,7 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { labels: { color: chartTextColor } }
+                        legend: { position: 'top', labels: { color: chartTextColor } }
                     },
                     scales: {
                         x: { ticks: { color: chartTextColor }, grid: { display: false } },
@@ -1936,91 +2051,6 @@
                     }
                 }
             });
-        }
-
-        // --- Export / Backup Features ---
-        function openBackupModal() {
-            document.getElementById('modalBackup').classList.remove('hidden');
-        }
-        function closeBackupModal() {
-            document.getElementById('modalBackup').classList.add('hidden');
-        }
-
-        function downloadBackupJSON() {
-            const data = {
-                transactions, budgets, goals, debts, recurrings, selectedPeriod
-            };
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
-            const downloadAnchorNode = document.createElement('a');
-            downloadAnchorNode.setAttribute("href", dataStr);
-            downloadAnchorNode.setAttribute("download", `KeuanganKu_Backup_${new Date().toISOString().split('T')[0]}.json`);
-            document.body.appendChild(downloadAnchorNode);
-            downloadAnchorNode.click();
-            downloadAnchorNode.remove();
-            showToast("Backup berhasil diunduh.");
-            closeBackupModal();
-        }
-
-        function restoreBackupJSON() {
-            const fileInput = document.getElementById('importFileInput');
-            const file = fileInput.files[0];
-            if (!file) {
-                showToast("Pilih file backup JSON terlebih dahulu.", "error");
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    if(data.transactions) transactions = data.transactions;
-                    if(data.budgets) budgets = data.budgets;
-                    if(data.goals) goals = data.goals;
-                    if(data.debts) debts = data.debts;
-                    if(data.recurrings) recurrings = data.recurrings;
-                    if(data.selectedPeriod) selectedPeriod = data.selectedPeriod;
-
-                    saveData();
-                    document.getElementById('currentPeriod').value = selectedPeriod;
-                    renderAll();
-                    showToast("Data berhasil dipulihkan dari backup!");
-                    closeBackupModal();
-                } catch (err) {
-                    showToast("Gagal membaca file. Pastikan format JSON valid.", "error");
-                }
-            };
-            reader.readAsText(file);
-        }
-
-        function exportCSV() {
-            if (transactions.length === 0) {
-                showToast('Tidak ada data transaksi untuk diexport.', 'error');
-                return;
-            }
-
-            let csvContent = "data:text/csv;charset=utf-8,";
-            csvContent += "ID,Tanggal,Jenis,Kategori,Judul,Dompet,Nominal\n";
-
-            transactions.forEach(t => {
-                const row = `${t.id},${t.tanggal},${t.jenis},${t.kategori},"${t.judul}",${t.dompet},${t.nominal}`;
-                csvContent += row + "\n";
-            });
-
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `KeuanganKu_Transaksi_${selectedPeriod}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            showToast('Data CSV berhasil diunduh.');
-        }
-
-        function exportPDF() {
-            showToast("Menyiapkan PDF...");
-            setTimeout(() => {
-                window.print();
-            }, 500);
         }
     </script>
 </body>
