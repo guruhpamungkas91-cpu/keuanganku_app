@@ -4,11 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KeuanganKu - Pembukuan Real-Time & Rekap Financial</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Chart.js for Financial Charts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
@@ -539,6 +536,7 @@
                         <h3 class="font-bold text-sm mb-4 border-b border-gray-800/50 pb-2 flex items-center gap-2">
                             <i class="fa-solid fa-sliders text-blue-500"></i> Set Target Anggaran Bulanan
                         </h3>
+                        <!-- Form for budget saving -->
                         <form id="budgetForm" onsubmit="saveBudget(event)" class="space-y-4 text-xs">
                             <input type="hidden" id="budgetId">
                             <div>
@@ -1481,7 +1479,7 @@
             breakdownContainer.innerHTML = '';
             
             if(Object.keys(expCategories).length === 0) {
-                breakdownContainer.innerHTML = '<p class="text-gray-400 col-span-3">Belum ada rincian pengeluaran di bulan ini.</p>';
+                breakdownContainer.innerHTML = '<p class="text-gray-400 col-span-3 text-center py-4">Belum ada rincian pengeluaran di bulan ini.</p>';
             } else {
                 Object.entries(expCategories).forEach(([kat, total]) => {
                     const pct = totalExpense > 0 ? ((total / totalExpense) * 100).toFixed(1) : 0;
@@ -1705,7 +1703,7 @@
             container.innerHTML = '';
 
             if(goals.length === 0) {
-                container.innerHTML = '<p class="text-gray-400 text-xs col-span-2">Belum ada target impian / dana darurat.</p>';
+                container.innerHTML = '<p class="text-gray-400 text-xs col-span-2 text-center py-6">Belum ada target impian / dana darurat.</p>';
                 return;
             }
 
@@ -1805,25 +1803,30 @@
             let totalPiutang = 0;
 
             if (debts.length === 0) {
-                 tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-gray-400">Belum ada catatan hutang/piutang.</td></tr>`;
+                 tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-gray-400">Belum ada catatan hutang/piutang.</td></tr>`;
             } else {
                 debts.forEach(d => {
+                    // Penyesuaian blok if yang terpotong sebelumnya
                     if (d.status !== 'Lunas') {
-                        if (d.type === 'Hutang') totalHutang += d.amount;
-                        else totalPiutang += d.amount;
+                        if (d.type === 'Hutang') {
+                            totalHutang += d.amount;
+                        } else {
+                            totalPiutang += d.amount;
+                        }
                     }
 
                     const isHutang = d.type === 'Hutang';
-                    const isLunas = d.status === 'Lunas';
                     const tr = document.createElement('tr');
-                    tr.className = `hover:bg-white/5 transition border-b border-gray-800/40 ${isLunas ? 'opacity-50' : ''}`;
+                    tr.className = "hover:bg-white/5 transition border-b border-gray-800/40";
                     tr.innerHTML = `
-                        <td class="py-3 px-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${isHutang ? 'bg-red-500/10 text-red-500 border border-red-500/30' : 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/30'}">${d.type}</span></td>
-                        <td class="py-3 px-3 font-semibold text-gray-200">${d.person} <br><span class="text-[10px] text-gray-500 font-normal">${d.notes || '-'}</span></td>
-                        <td class="py-3 px-3 font-mono font-bold ${isHutang ? 'text-red-500' : 'text-emerald-500'}">${formatRp(d.amount)}</td>
-                        <td class="py-3 px-3 text-gray-400">${d.dueDate || '-'}</td>
                         <td class="py-3 px-3">
-                            <button onclick="toggleDebtStatus('${d.id}')" class="px-2 py-1 rounded text-[10px] font-bold transition ${isLunas ? 'bg-emerald-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}">
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-md ${isHutang ? 'bg-rose-500/20 text-rose-500' : 'bg-emerald-500/20 text-emerald-500'}">${d.type}</span>
+                        </td>
+                        <td class="py-3 px-3 font-semibold text-gray-200">${d.person}</td>
+                        <td class="py-3 px-3 font-mono font-bold ${isHutang ? 'text-rose-500' : 'text-emerald-500'}">${formatRp(d.amount)}</td>
+                        <td class="py-3 px-3 font-mono text-[11px] text-gray-400">${d.dueDate || '-'}</td>
+                        <td class="py-3 px-3">
+                            <button onclick="toggleDebtStatus('${d.id}')" class="text-[10px] font-bold px-2 py-0.5 rounded-md ${d.status === 'Lunas' ? 'bg-blue-500/20 text-blue-500 border border-blue-500/50' : 'bg-gray-500/20 text-gray-400 border border-gray-500/50'} transition">
                                 ${d.status}
                             </button>
                         </td>
@@ -1838,9 +1841,11 @@
                 });
             }
 
+            const netDebt = totalPiutang - totalHutang;
             document.getElementById('totalHutangVal').textContent = formatRp(totalHutang);
             document.getElementById('totalPiutangVal').textContent = formatRp(totalPiutang);
-            document.getElementById('netDebtVal').textContent = formatRp(totalPiutang - totalHutang);
+            document.getElementById('netDebtVal').textContent = formatRp(netDebt);
+            document.getElementById('netDebtVal').className = `text-lg font-bold ${netDebt >= 0 ? 'text-emerald-500' : 'text-rose-500'}`;
         }
 
         function saveRecurring(e) {
@@ -1851,15 +1856,15 @@
             const day = parseInt(document.getElementById('recDay').value) || 1;
             const dompet = document.getElementById('recDompet').value;
 
-            if(id) {
+            if (id) {
                 const idx = recurrings.findIndex(r => r.id === id);
-                if(idx !== -1) {
+                if (idx !== -1) {
                     recurrings[idx] = { id, name, amount, day, dompet };
-                    showToast('Tagihan diperbarui');
+                    showToast('Tagihan rutin diperbarui');
                 }
             } else {
                 recurrings.push({ id: 'r_' + Date.now(), name, amount, day, dompet });
-                showToast('Tagihan ditambahkan');
+                showToast('Tagihan rutin ditambahkan');
             }
 
             saveData();
@@ -1870,7 +1875,7 @@
 
         function editRecurring(id) {
             const r = recurrings.find(x => x.id === id);
-            if(!r) return;
+            if (!r) return;
             document.getElementById('recId').value = r.id;
             document.getElementById('recName').value = r.name;
             document.getElementById('recAmount').value = r.amount;
@@ -1883,33 +1888,37 @@
                 recurrings = recurrings.filter(r => r.id !== id);
                 saveData();
                 renderRecurring();
-                showToast('Tagihan dihapus');
+                showToast('Tagihan rutin dihapus');
             });
         }
 
         function payRecurring(id) {
             const r = recurrings.find(x => x.id === id);
-            if(!r) return;
-            
-            document.getElementById('txJenis').value = "Pengeluaran Tetap";
-            updateCategoriesOptions();
-            document.getElementById('txJudul').value = `Bayar: ${r.name}`;
-            document.getElementById('txNominal').value = r.amount;
-            document.getElementById('txDompet').value = r.dompet;
-            document.getElementById('txTanggal').value = new Date().toISOString().split('T')[0];
-            
-            const katSelect = document.getElementById('txKategori');
-            for(let i=0; i<katSelect.options.length; i++) {
-                if(r.name.toLowerCase().includes('kost') || r.name.toLowerCase().includes('sewa')) {
-                    if(katSelect.options[i].value === "Sewa Kost/Kontrakan") katSelect.selectedIndex = i;
-                } else if(r.name.toLowerCase().includes('wifi') || r.name.toLowerCase().includes('internet')) {
-                    if(katSelect.options[i].value === "Wifi/Internet") katSelect.selectedIndex = i;
-                }
+            if (!r) return;
+
+            const targetPrefix = document.getElementById('currentPeriod').value; // format YYYY-MM
+            const alreadyPaid = transactions.some(t => t.judul.includes(r.name) && t.tanggal.startsWith(targetPrefix));
+
+            if (alreadyPaid) {
+                showToast('Tagihan ini sepertinya sudah dibayar bulan ini.', 'error');
+                return;
             }
 
-            switchTab('transaksi');
-            showToast('Form transaksi telah diisi otomatis. Silakan periksa dan Simpan.');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            const dayStr = r.day.toString().padStart(2, '0');
+            const newTx = {
+                id: 'tx_' + Date.now(),
+                jenis: 'Pengeluaran Tetap',
+                judul: `Bayar Tagihan: ${r.name}`,
+                nominal: r.amount,
+                dompet: r.dompet,
+                kategori: 'Cicilan / Paylater', 
+                tanggal: `${targetPrefix}-${dayStr}`
+            };
+
+            transactions.unshift(newTx);
+            saveData();
+            renderAll();
+            showToast(`Tagihan ${r.name} dibayarkan & dicatat ke transaksi`);
         }
 
         function renderRecurring() {
@@ -1917,33 +1926,34 @@
             container.innerHTML = '';
 
             if (recurrings.length === 0) {
-                container.innerHTML = '<p class="text-gray-400 text-xs">Belum ada tagihan berulang.</p>';
+                container.innerHTML = '<p class="text-gray-400 text-xs text-center py-6">Belum ada tagihan rutin.</p>';
                 return;
             }
 
             recurrings.forEach(r => {
                 const badgeClass = getDompetBadgeClass(r.dompet);
+                const targetPrefix = document.getElementById('currentPeriod').value;
+                const isPaid = transactions.some(t => t.judul.includes(r.name) && t.tanggal.startsWith(targetPrefix));
+
                 container.innerHTML += `
-                    <div class="card-custom p-4 rounded-xl border border-gray-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                        <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-500 flex flex-col items-center justify-center border border-blue-500/30">
-                                <span class="text-[10px] font-bold uppercase leading-none">Tgl</span>
-                                <span class="text-lg font-black leading-none mt-1">${r.day}</span>
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-gray-200 text-sm">${r.name}</h4>
-                                <div class="flex items-center gap-2 mt-1">
-                                    <span class="text-rose-500 font-bold font-mono text-xs">${formatRp(r.amount)}</span>
-                                    <span class="text-[9px] font-bold px-1.5 py-0.5 rounded ${badgeClass}">${r.dompet}</span>
-                                </div>
+                    <div class="card-custom p-4 rounded-xl border border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-3 transition hover:border-gray-700">
+                        <div class="w-full sm:w-auto">
+                            <h4 class="font-bold text-gray-200">${r.name}</h4>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="text-xs text-gray-400">Tgl ${r.day} tiap bulan</span>
+                                <span class="text-[10px] px-2 py-0.5 rounded ${badgeClass}">${r.dompet}</span>
                             </div>
                         </div>
-                        <div class="flex items-center gap-2 w-full sm:w-auto">
-                            <button onclick="payRecurring('${r.id}')" class="flex-1 sm:flex-none px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow transition">
-                                <i class="fa-solid fa-check-double"></i> Bayar
-                            </button>
-                            <button onclick="editRecurring('${r.id}')" class="p-2 text-blue-500 hover:bg-blue-500/10 rounded-lg transition"><i class="fa-solid fa-pen-to-square"></i></button>
-                            <button onclick="deleteRecurring('${r.id}')" class="p-2 text-rose-500 hover:bg-rose-500/10 rounded-lg transition"><i class="fa-solid fa-trash"></i></button>
+                        <div class="w-full sm:w-auto flex items-center justify-between sm:justify-end gap-4">
+                            <span class="font-bold text-rose-500 font-mono">${formatRp(r.amount)}</span>
+                            <div class="flex items-center gap-2 no-print">
+                                ${isPaid 
+                                    ? '<span class="text-[10px] bg-emerald-500/20 text-emerald-500 px-2 py-1 rounded font-bold border border-emerald-500/30"><i class="fa-solid fa-check"></i> Lunas Bulan Ini</span>'
+                                    : `<button onclick="payRecurring('${r.id}')" class="bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg shadow transition"><i class="fa-solid fa-wallet"></i> Bayar Sekarang</button>`
+                                }
+                                <button onclick="editRecurring('${r.id}')" class="text-blue-500 hover:text-blue-400 p-1"><i class="fa-solid fa-pen-to-square"></i></button>
+                                <button onclick="deleteRecurring('${r.id}')" class="text-rose-500 hover:text-rose-400 p-1"><i class="fa-solid fa-trash"></i></button>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -1952,99 +1962,101 @@
 
         function renderAnnualSummary() {
             const year = document.getElementById('rekapYearSelect').value;
-            const months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'];
-            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+            const annualTxs = transactions.filter(t => t.tanggal.startsWith(year));
 
-            let annInc = 0, annTetap = 0, annHarian = 0, annLain = 0;
-            const incData = [];
-            const expData = [];
-            const tbody = document.getElementById('annualTableBody');
-            tbody.innerHTML = '';
+            let totIncome = 0;
+            let totTetap = 0;
+            let totHarian = 0;
+            let totLain = 0;
 
-            months.forEach((m, idx) => {
-                const prefix = `${year}-${m}`;
-                const mtx = transactions.filter(t => t.tanggal.startsWith(prefix));
+            const monthlyData = Array.from({length: 12}, () => ({ income: 0, tetap: 0, harian: 0, lain: 0, totalExp: 0, net: 0 }));
 
-                let mInc = 0, mTetap = 0, mHarian = 0, mLain = 0;
-                mtx.forEach(t => {
-                    if (t.jenis === "Pemasukkan") mInc += t.nominal;
-                    else if (t.jenis === "Pengeluaran Tetap") mTetap += t.nominal;
-                    else if (t.jenis === "Pengeluaran Harian") mHarian += t.nominal;
-                    else mLain += t.nominal;
-                });
-
-                const mExp = mTetap + mHarian + mLain;
-                const mNet = mInc - mExp;
-
-                annInc += mInc;
-                annTetap += mTetap;
-                annHarian += mHarian;
-                annLain += mLain;
-
-                incData.push(mInc);
-                expData.push(mExp);
-
-                if (mInc > 0 || mExp > 0) {
-                    tbody.innerHTML += `
-                        <tr class="hover:bg-white/5 transition text-xs font-mono">
-                            <td class="py-3 px-3 font-sans font-bold text-gray-300">${monthNames[idx]} ${year}</td>
-                            <td class="py-3 px-3 text-emerald-500">${formatRp(mInc)}</td>
-                            <td class="py-3 px-3 text-blue-500">${formatRp(mTetap)}</td>
-                            <td class="py-3 px-3 text-amber-500">${formatRp(mHarian)}</td>
-                            <td class="py-3 px-3 text-purple-500">${formatRp(mLain)}</td>
-                            <td class="py-3 px-3 text-rose-500 font-bold">${formatRp(mExp)}</td>
-                            <td class="py-3 px-3 text-right font-bold ${mNet >= 0 ? 'text-emerald-500' : 'text-rose-500'}">${mNet >= 0 ? '+' : ''}${formatRp(mNet)}</td>
-                        </tr>
-                    `;
+            annualTxs.forEach(t => {
+                const monthIdx = parseInt(t.tanggal.split('-')[1]) - 1; // 0-11
+                if (monthIdx >= 0 && monthIdx <= 11) {
+                    if (t.jenis === 'Pemasukkan') {
+                        totIncome += t.nominal;
+                        monthlyData[monthIdx].income += t.nominal;
+                    } else {
+                        monthlyData[monthIdx].totalExp += t.nominal;
+                        if (t.jenis === 'Pengeluaran Tetap') {
+                            totTetap += t.nominal;
+                            monthlyData[monthIdx].tetap += t.nominal;
+                        } else if (t.jenis === 'Pengeluaran Harian') {
+                            totHarian += t.nominal;
+                            monthlyData[monthIdx].harian += t.nominal;
+                        } else {
+                            totLain += t.nominal;
+                            monthlyData[monthIdx].lain += t.nominal;
+                        }
+                    }
                 }
             });
 
-            if(tbody.innerHTML === '') {
-                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-gray-500 font-sans">Tidak ada data transaksi untuk tahun ${year}.</td></tr>`;
-            }
+            document.getElementById('annualIncome').textContent = formatRp(totIncome);
+            document.getElementById('annualExpenseTetap').textContent = formatRp(totTetap);
+            document.getElementById('annualExpenseHarian').textContent = formatRp(totHarian);
+            document.getElementById('annualExpenseLain').textContent = formatRp(totLain);
+            document.getElementById('annualNetSavings').textContent = formatRp(totIncome - (totTetap + totHarian + totLain));
 
-            document.getElementById('annualIncome').textContent = formatRp(annInc);
-            document.getElementById('annualExpenseTetap').textContent = formatRp(annTetap);
-            document.getElementById('annualExpenseHarian').textContent = formatRp(annHarian);
-            document.getElementById('annualExpenseLain').textContent = formatRp(annLain);
-            document.getElementById('annualNetSavings').textContent = formatRp(annInc - (annTetap + annHarian + annLain));
+            const tbody = document.getElementById('annualTableBody');
+            tbody.innerHTML = '';
+            const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+
+            monthNames.forEach((month, idx) => {
+                const data = monthlyData[idx];
+                data.net = data.income - data.totalExp;
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-white/5 transition border-b border-gray-800/40";
+                tr.innerHTML = `
+                    <td class="py-2.5 px-3 text-gray-200">${month}</td>
+                    <td class="py-2.5 px-3 text-emerald-500 font-mono">${formatRp(data.income)}</td>
+                    <td class="py-2.5 px-3 text-blue-500 font-mono">${formatRp(data.tetap)}</td>
+                    <td class="py-2.5 px-3 text-amber-500 font-mono">${formatRp(data.harian)}</td>
+                    <td class="py-2.5 px-3 text-purple-500 font-mono">${formatRp(data.lain)}</td>
+                    <td class="py-2.5 px-3 text-rose-500 font-bold font-mono">${formatRp(data.totalExp)}</td>
+                    <td class="py-2.5 px-3 text-right font-bold font-mono ${data.net >= 0 ? 'text-emerald-500' : 'text-rose-500'}">${formatRp(data.net)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
 
             const ctx = document.getElementById('annualChart').getContext('2d');
+            if(chartAnnual) chartAnnual.destroy();
+
             const chartTextColor = getChartTextColor();
             const chartGridColor = getChartGridColor();
 
-            if (chartAnnual) chartAnnual.destroy();
             chartAnnual = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: monthNames,
                     datasets: [
                         {
-                            label: 'Pemasukan',
-                            data: incData,
+                            label: 'Pemasukkan',
+                            data: monthlyData.map(d => d.income),
                             borderColor: '#10b981',
                             backgroundColor: 'rgba(16, 185, 129, 0.1)',
                             borderWidth: 2,
-                            fill: true,
-                            tension: 0.3
+                            tension: 0.3,
+                            fill: true
                         },
                         {
-                            label: 'Pengeluaran',
-                            data: expData,
-                            borderColor: '#ef4444',
-                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            label: 'Total Pengeluaran',
+                            data: monthlyData.map(d => d.totalExp),
+                            borderColor: '#f43f5e',
+                            backgroundColor: 'rgba(244, 63, 94, 0.1)',
                             borderWidth: 2,
-                            fill: true,
-                            tension: 0.3
+                            tension: 0.3,
+                            fill: true
                         }
                     ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'top', labels: { color: chartTextColor } }
-                    },
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: { legend: { labels: { color: chartTextColor } } },
                     scales: {
                         x: { ticks: { color: chartTextColor }, grid: { display: false } },
                         y: { ticks: { color: chartTextColor }, grid: { color: chartGridColor } }
