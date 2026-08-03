@@ -1520,12 +1520,22 @@ let recurrings = JSON.parse(localStorage.getItem('keuanganku_recurrings')) || [
         function saveBudget(e) {
     if (e) e.preventDefault(); // Mencegah form reload halaman
 
-    const id = document.getElementById('budgetId')?.value;
-    const kategori = document.getElementById('budgetKategori')?.value;
-    const limit = parseFloat(document.getElementById('budgetLimit')?.value) || 0;
+    const idInput = document.getElementById('budgetId');
+    const kategoriInput = document.getElementById('budgetKategori');
+    const limitInput = document.getElementById('budgetLimit');
+
+    const id = idInput ? idInput.value : '';
+    const kategori = kategoriInput ? kategoriInput.value : '';
+    const limit = parseFloat(limitInput ? limitInput.value : 0) || 0;
+
+    // Toast helper internal agar tidak crash jika showToast() belum ada
+    const notify = (msg) => {
+        if (typeof showToast === 'function') showToast(msg);
+        else console.log('[Toast]:', msg);
+    };
 
     if (!kategori || limit <= 0) {
-        showToast('Pilih kategori dan isi limit lebih dari 0!');
+        notify('Pilih kategori dan isi limit lebih dari 0!');
         return;
     }
 
@@ -1534,29 +1544,33 @@ let recurrings = JSON.parse(localStorage.getItem('keuanganku_recurrings')) || [
         const idx = budgets.findIndex(b => b.id === id);
         if (idx !== -1) {
             budgets[idx] = { id, kategori, limit };
-            showToast('Target anggaran diperbarui');
+            notify('Target anggaran diperbarui');
         }
     } else {
         // MODE TAMBAH: Cek apakah kategori sudah ada
         const existingIdx = budgets.findIndex(b => b.kategori === kategori);
         if (existingIdx !== -1) {
             budgets[existingIdx].limit = limit;
-            showToast(`Target anggaran untuk ${kategori} diperbarui`);
+            notify(`Target anggaran untuk ${kategori} diperbarui`);
         } else {
             budgets.push({ id: 'b_' + Date.now(), kategori, limit });
-            showToast('Target anggaran ditambahkan');
+            notify('Target anggaran ditambahkan');
         }
     }
 
-    // 1. Wajib Simpan Permanen ke LocalStorage
-    saveData();
+    // 1. Simpan Permanen ke LocalStorage
+    if (typeof saveData === 'function') {
+        saveData();
+    } else {
+        localStorage.setItem('keuanganku_budgets', JSON.stringify(budgets));
+    }
 
     // 2. Reset Form
     const form = document.getElementById('budgetForm');
     if (form) form.reset();
-    if (document.getElementById('budgetId')) document.getElementById('budgetId').value = '';
+    if (idInput) idInput.value = '';
 
-    // 3. Render ulang tampilan
+    // 3. Render Ulang Tampilan
     renderBudgets();
 }
 
@@ -1564,27 +1578,36 @@ function editBudget(id) {
     const b = budgets.find(x => x.id === id);
     if (!b) return;
     
-    if (document.getElementById('budgetId')) document.getElementById('budgetId').value = b.id;
-    if (document.getElementById('budgetKategori')) document.getElementById('budgetKategori').value = b.kategori;
-    if (document.getElementById('budgetLimit')) document.getElementById('budgetLimit').value = b.limit;
+    const idInput = document.getElementById('budgetId');
+    const kategoriInput = document.getElementById('budgetKategori');
+    const limitInput = document.getElementById('budgetLimit');
+
+    if (idInput) idInput.value = b.id;
+    if (kategoriInput) kategoriInput.value = b.kategori;
+    if (limitInput) limitInput.value = b.limit;
     
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function deleteBudget(id) {
-    // Memakai dialog konfirmasi bawaan atau askConfirmation
-    if (typeof askConfirmation === 'function') {
-        askConfirmation('Hapus Anggaran', 'Apakah Anda yakin ingin menghapus target anggaran ini?', () => {
-            budgets = budgets.filter(b => b.id !== id);
-            saveData();
-            renderBudgets();
-            showToast('Target anggaran dihapus');
-        });
-    } else if (confirm('Apakah Anda yakin ingin menghapus target anggaran ini?')) {
+    const performDelete = () => {
         budgets = budgets.filter(b => b.id !== id);
-        saveData();
+        
+        if (typeof saveData === 'function') {
+            saveData();
+        } else {
+            localStorage.setItem('keuanganku_budgets', JSON.stringify(budgets));
+        }
+
         renderBudgets();
+
         if (typeof showToast === 'function') showToast('Target anggaran dihapus');
+    };
+
+    if (typeof askConfirmation === 'function') {
+        askConfirmation('Hapus Anggaran', 'Apakah Anda yakin ingin menghapus target anggaran ini?', performDelete);
+    } else if (confirm('Apakah Anda yakin ingin menghapus target anggaran ini?')) {
+        performDelete();
     }
 }
 
@@ -1593,14 +1616,23 @@ function renderBudgets() {
     if (!container) return;
     container.innerHTML = '';
 
-    // Filter transaksi pengeluaran sesuai periode yang dipilih
-    const currentPeriodTxs = transactions.filter(t => 
-        t.tanggal && 
-        t.tanggal.startsWith(typeof selectedPeriod !== 'undefined' ? selectedPeriod : new Date().toISOString().slice(0, 7)) && 
-        t.jenis !== "Pemasukkan"
-    );
+    // Ambil variabel transaksi & periode secara aman
+    const txs = typeof transactions !== 'undefined' ? transactions : [];
+    const activePeriod = typeof selectedPeriod !== 'undefined' ? selectedPeriod : new Date().toISOString().slice(0, 7);
 
-    if (budgets.length === 0) {
+    // Filter transaksi pengeluaran bulan/periode aktif
+    const currentPeriodTxs = txs.filter(t => {
+        if (!t || !t.tanggal) return false;
+        
+        const isCurrentPeriod = t.tanggal.startsWith(activePeriod);
+        // Mendukung properti 'jenis' maupun 'tipe'
+        const jenisTx = (t.jenis || t.tipe || '').toLowerCase();
+        const isPengeluaran = jenisTx !== 'pemasukkan' && jenisTx !== 'pemasukan' && jenisTx !== 'income';
+
+        return isCurrentPeriod && isPengeluaran;
+    });
+
+    if (!budgets || budgets.length === 0) {
         container.innerHTML = `
             <div class="text-center py-8 text-gray-400 col-span-full">
                 <i class="fa-solid fa-sliders text-2xl mb-2 block text-gray-500"></i>
@@ -1611,10 +1643,10 @@ function renderBudgets() {
     }
 
     budgets.forEach(b => {
-        // Hitung total pengeluaran nyata per kategori
+        // Hitung total pengeluaran per kategori (Mendukung properti 'kategori', 'nominal', 'jumlah', 'amount')
         const actualSpent = currentPeriodTxs
-            .filter(t => t.kategori === b.kategori)
-            .reduce((acc, curr) => acc + (parseFloat(curr.nominal) || parseFloat(curr.jumlah) || 0), 0);
+            .filter(t => (t.kategori || t.category) === b.kategori)
+            .reduce((acc, curr) => acc + (parseFloat(curr.nominal || curr.jumlah || curr.amount || 0)), 0);
 
         const rawPct = b.limit > 0 ? Math.round((actualSpent / b.limit) * 100) : 0;
         const clampedPct = Math.min(100, rawPct);
@@ -1634,7 +1666,9 @@ function renderBudgets() {
         }
 
         const remaining = b.limit - actualSpent;
-        const formatRupiah = typeof formatRp === 'function' ? formatRp : (val) => 'Rp ' + val.toLocaleString('id-ID');
+        const formatRupiah = typeof formatRp === 'function' 
+            ? formatRp 
+            : (val) => 'Rp ' + Number(val).toLocaleString('id-ID');
 
         container.innerHTML += `
             <div class="card-custom p-4 rounded-xl space-y-3 border border-gray-800 hover:border-gray-700 transition">
