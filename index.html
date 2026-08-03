@@ -1192,54 +1192,89 @@ let recurrings = JSON.parse(localStorage.getItem('keuanganku_recurrings')) || [
         }
 
         function saveTransaction(e) {
-            e.preventDefault();
-            const id = document.getElementById('txId').value;
-            const jenis = document.getElementById('txJenis').value;
-            const judul = document.getElementById('txJudul').value.trim();
-            const nominal = parseFloat(document.getElementById('txNominal').value) || 0;
-            const dompet = document.getElementById('txDompet').value;
-            const kategori = document.getElementById('txKategori').value;
-            const tanggal = document.getElementById('txTanggal').value;
+    if (e) e.preventDefault();
 
-            if(!judul || nominal <= 0 || !tanggal) return;
+    // 1. Ambil input ID (Hidden Input)
+    const idInput = document.getElementById('txId') || document.getElementById('transactionId');
+    const id = idInput ? idInput.value : '';
 
-            if(id) {
-                const idx = transactions.findIndex(t => t.id === id);
-                if(idx !== -1) {
-                    transactions[idx] = { id, jenis, judul, nominal, dompet, kategori, tanggal };
-                    showToast('Transaksi berhasil diperbarui');
-                }
-            } else {
-                const newTx = {
-                    id: 'tx_' + Date.now(),
-                    jenis, judul, nominal, dompet, kategori, tanggal
-                };
-                transactions.unshift(newTx);
-                showToast('Transaksi baru ditambahkan');
-            }
+    // 2. Ambil nilai input lainnya
+    const tanggal = document.getElementById('txTanggal')?.value || document.getElementById('tanggal')?.value;
+    const kategori = document.getElementById('txKategori')?.value || document.getElementById('kategori')?.value;
+    const nominal = parseFloat(document.getElementById('txNominal')?.value || document.getElementById('nominal')?.value || 0);
+    const jenis = document.getElementById('txJenis')?.value || document.getElementById('jenis')?.value;
+    const catatan = document.getElementById('txCatatan')?.value || document.getElementById('catatan')?.value || '';
 
-            saveData();
-            resetForm();
-            renderAll();
+    if (!tanggal || !kategori || nominal <= 0) {
+        if (typeof showToast === 'function') showToast('Harap isi semua bidang dengan benar!');
+        return;
+    }
+
+    // Guard Clamp: Pastikan transactions selalu Array
+    if (!Array.isArray(transactions)) transactions = [];
+
+    if (id) {
+        // 🔴 MODE EDIT: Cari index transaksi berdasarkan ID
+        const idx = transactions.findIndex(t => String(t.id) === String(id));
+        if (idx !== -1) {
+            // Update transaksi pada index tersebut, PASTIKAN ID LAMA TETAP DIPAKAI
+            transactions[idx] = { id, tanggal, kategori, nominal, jenis, catatan };
+            if (typeof showToast === 'function') showToast('Transaksi berhasil diperbarui');
         }
+    } else {
+        // 🟢 MODE TAMBAH BARU
+        const newTx = {
+            id: 'tx_' + Date.now(),
+            tanggal,
+            kategori,
+            nominal,
+            jenis,
+            catatan
+        };
+        transactions.push(newTx);
+        if (typeof showToast === 'function') showToast('Transaksi berhasil ditambahkan');
+    }
+
+    // 🔴 3. WAJIB! SIMPAN PERMANEN KE LOCALSTORAGE (Ini yang bikin tidak hilang pas F5)
+    if (typeof saveData === 'function') {
+        saveData();
+    } else {
+        localStorage.setItem('keuanganku_transactions', JSON.stringify(transactions));
+    }
+
+    // 4. Reset Form & Hidden ID Input
+    const form = document.getElementById('transactionForm') || document.getElementById('txForm');
+    if (form) form.reset();
+    if (idInput) idInput.value = '';
+
+    // 5. Render Ulang Semua Komponen Tampilan
+    if (typeof renderAll === 'function') {
+        renderAll();
+    } else {
+        if (typeof renderTransactions === 'function') renderTransactions();
+        if (typeof renderBudgets === 'function') renderBudgets();
+        if (typeof renderSummary === 'function') renderSummary();
+    }
+}
 
         function editTransaction(id) {
-            const tx = transactions.find(t => t.id === id);
-            if(!tx) return;
+    // Pastikan pencarian id aman (dikonversi ke String)
+    const t = transactions.find(x => String(x.id) === String(id));
+    if (!t) return;
 
-            document.getElementById('txId').value = tx.id;
-            document.getElementById('txJenis').value = tx.jenis;
-            updateCategoriesOptions();
-            document.getElementById('txJudul').value = tx.judul;
-            document.getElementById('txNominal').value = tx.nominal;
-            document.getElementById('txDompet').value = tx.dompet;
-            document.getElementById('txKategori').value = tx.kategori;
-            document.getElementById('txTanggal').value = tx.tanggal;
+    // Isikan data transaksi ke form
+    const idInput = document.getElementById('txId') || document.getElementById('transactionId');
+    if (idInput) idInput.value = t.id; // 🔴 WAJIB KETANAM ID-NYA DI FORM
 
-            document.getElementById('formTitle').textContent = "Edit Transaksi";
-            document.getElementById('btnSubmitTx').innerHTML = '<i class="fa-solid fa-check"></i> Update Transaksi';
-            document.getElementById('cancelEditBtn').classList.remove('hidden');
-        }
+    if (document.getElementById('txTanggal')) document.getElementById('txTanggal').value = t.tanggal;
+    if (document.getElementById('txKategori')) document.getElementById('txKategori').value = t.kategori;
+    if (document.getElementById('txNominal')) document.getElementById('txNominal').value = t.nominal;
+    if (document.getElementById('txJenis')) document.getElementById('txJenis').value = t.jenis;
+    if (document.getElementById('txCatatan')) document.getElementById('txCatatan').value = t.catatan || '';
+
+    // Scroll halus ke form
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 
         function resetForm() {
             document.getElementById('txForm').reset();
