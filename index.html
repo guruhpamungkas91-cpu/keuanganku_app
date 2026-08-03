@@ -942,8 +942,17 @@ let recurrings = JSON.parse(localStorage.getItem('keuanganku_recurrings')) || [
         };
 
         function saveData() {
+    // Pastikan transactions selalu Array
+    if (!Array.isArray(transactions)) transactions = [];
+    
+    // 🔴 SIMPAN TRANSAKSI KE LOCALSTORAGE
     localStorage.setItem('keuanganku_transactions', JSON.stringify(transactions));
-    if (!Array.isArray(budgets)) budgets = [];
+    
+    // Simpan data lainnya (misal budgets, dll) jika ada
+    if (typeof budgets !== 'undefined') {
+        localStorage.setItem('keuanganku_budgets', JSON.stringify(budgets));
+    }
+}
     localStorage.setItem('keuanganku_budgets', JSON.stringify(budgets));
     localStorage.setItem('keuanganku_goals', JSON.stringify(goals));
     localStorage.setItem('keuanganku_debts', JSON.stringify(debts));
