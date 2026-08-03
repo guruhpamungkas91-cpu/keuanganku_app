@@ -894,22 +894,25 @@
         ];
 
         let transactions = JSON.parse(localStorage.getItem('keuanganku_tx')) || INITIAL_TRANSACTIONS;
-        let budgets = JSON.parse(localStorage.getItem('keuanganku_budgets')) || [
-            { id: 'b1', kategori: 'Makanan & Minuman', limit: 1000000 },
-            { id: 'b2', kategori: 'Cicilan / Paylater', limit: 1500000 }
-        ];
-        let goals = JSON.parse(localStorage.getItem('keuanganku_goals')) || [
-            { id: 'g1', name: 'Dana Darurat 6 Bulan', target: 30000000, current: 12500000, category: 'Dana Darurat' },
-            { id: 'g2', name: 'MacBook M3 Pro', target: 24000000, current: 8000000, category: 'Gadget & Laptop' }
-        ];
-        let debts = JSON.parse(localStorage.getItem('keuanganku_debts')) || [
-            { id: 'd1', type: 'Hutang', person: 'Paylater CC', amount: 349000, dueDate: '2026-08-10', status: 'Belum Lunas', notes: 'Cicilan 0%' },
-            { id: 'd2', type: 'Piutang', person: 'Budi (Sisa Pinjaman)', amount: 250000, dueDate: '2026-08-15', status: 'Belum Lunas', notes: 'Janji gajian' }
-        ];
-        let recurrings = JSON.parse(localStorage.getItem('keuanganku_recurrings')) || [
-            { id: 'r1', name: 'Sewa Kost Bulanan', amount: 1200000, day: 1, dompet: 'Bank BCA' },
-            { id: 'r2', name: 'Wifi Indihome / Internet', amount: 350000, day: 5, dompet: 'ShopeePay' }
-        ];
+let budgets = JSON.parse(localStorage.getItem('keuanganku_budgets')) || [
+    { id: 'b1', kategori: 'Makanan & Minuman', limit: 1000000 },
+    { id: 'b2', kategori: 'Cicilan / Paylater', limit: 1500000 }
+];
+
+let goals = JSON.parse(localStorage.getItem('keuanganku_goals')) || [
+    { id: 'g1', name: 'Dana Darurat 6 Bulan', target: 30000000, current: 12500000, category: 'Dana Darurat' },
+    { id: 'g2', name: 'MacBook M3 Pro', target: 24000000, current: 8000000, category: 'Gadget & Laptop' }
+];
+
+let debts = JSON.parse(localStorage.getItem('keuanganku_debts')) || [
+    { id: 'd1', type: 'Hutang', person: 'Paylater CC', amount: 349000, dueDate: '2026-08-10', status: 'Belum Lunas', notes: 'Cicilan 0%' },
+    { id: 'd2', type: 'Piutang', person: 'Budi (Sisa Pinjaman)', amount: 250000, dueDate: '2026-08-15', status: 'Belum Lunas', notes: 'Janji gajian' }
+];
+
+let recurrings = JSON.parse(localStorage.getItem('keuanganku_recurrings')) || [
+    { id: 'r1', name: 'Sewa Kost Bulanan', amount: 1200000, day: 1, dompet: 'Bank BCA' },
+    { id: 'r2', name: 'Wifi Indihome / Internet', amount: 350000, day: 5, dompet: 'ShopeePay' }
+];
 
         let selectedPeriod = localStorage.getItem('keuanganku_period') || '2026-07';
         let pendingConfirmCallback = null;
@@ -932,13 +935,13 @@
         };
 
         function saveData() {
-            localStorage.setItem('keuanganku_tx', JSON.stringify(transactions));
-            localStorage.setItem('keuanganku_budgets', JSON.stringify(budgets));
-            localStorage.setItem('keuanganku_goals', JSON.stringify(goals));
-            localStorage.setItem('keuanganku_debts', JSON.stringify(debts));
-            localStorage.setItem('keuanganku_recurrings', JSON.stringify(recurrings));
-            localStorage.setItem('keuanganku_period', selectedPeriod);
-        }
+    localStorage.setItem('keuanganku_transactions', JSON.stringify(transactions));
+    localStorage.setItem('keuanganku_budgets', JSON.stringify(budgets));
+    localStorage.setItem('keuanganku_goals', JSON.stringify(goals));
+    localStorage.setItem('keuanganku_debts', JSON.stringify(debts));
+    localStorage.setItem('keuanganku_recurrings', JSON.stringify(recurrings));
+    localStorage.setItem('keuanganku_period', selectedPeriod);
+}
 
         function formatRp(num) {
             return 'Rp ' + Number(num || 0).toLocaleString('id-ID');
@@ -1507,125 +1510,154 @@
         }
 
         function saveBudget(e) {
-            e.preventDefault();
-            const id = document.getElementById('budgetId').value;
-            const kategori = document.getElementById('budgetKategori').value;
-            const limit = parseFloat(document.getElementById('budgetLimit').value) || 0;
+    if (e) e.preventDefault(); // Mencegah form reload halaman
 
-            if (!kategori || limit <= 0) return;
+    const id = document.getElementById('budgetId')?.value;
+    const kategori = document.getElementById('budgetKategori')?.value;
+    const limit = parseFloat(document.getElementById('budgetLimit')?.value) || 0;
 
-            if (id) {
-                const idx = budgets.findIndex(b => b.id === id);
-                if (idx !== -1) {
-                    budgets[idx] = { id, kategori, limit };
-                    showToast('Target anggaran diperbarui');
-                }
-            } else {
-                const existingIdx = budgets.findIndex(b => b.kategori === kategori);
-                if (existingIdx !== -1) {
-                    budgets[existingIdx].limit = limit;
-                    showToast(`Target anggaran untuk ${kategori} diperbarui`);
-                } else {
-                    budgets.push({ id: 'b_' + Date.now(), kategori, limit });
-                    showToast('Target anggaran ditambahkan');
-                }
-            }
+    if (!kategori || limit <= 0) {
+        showToast('Pilih kategori dan isi limit lebih dari 0!');
+        return;
+    }
 
+    if (id) {
+        // MODE EDIT: Update target yang sudah ada
+        const idx = budgets.findIndex(b => b.id === id);
+        if (idx !== -1) {
+            budgets[idx] = { id, kategori, limit };
+            showToast('Target anggaran diperbarui');
+        }
+    } else {
+        // MODE TAMBAH: Cek apakah kategori sudah ada
+        const existingIdx = budgets.findIndex(b => b.kategori === kategori);
+        if (existingIdx !== -1) {
+            budgets[existingIdx].limit = limit;
+            showToast(`Target anggaran untuk ${kategori} diperbarui`);
+        } else {
+            budgets.push({ id: 'b_' + Date.now(), kategori, limit });
+            showToast('Target anggaran ditambahkan');
+        }
+    }
+
+    // 1. Wajib Simpan Permanen ke LocalStorage
+    saveData();
+
+    // 2. Reset Form
+    const form = document.getElementById('budgetForm');
+    if (form) form.reset();
+    if (document.getElementById('budgetId')) document.getElementById('budgetId').value = '';
+
+    // 3. Render ulang tampilan
+    renderBudgets();
+}
+
+function editBudget(id) {
+    const b = budgets.find(x => x.id === id);
+    if (!b) return;
+    
+    if (document.getElementById('budgetId')) document.getElementById('budgetId').value = b.id;
+    if (document.getElementById('budgetKategori')) document.getElementById('budgetKategori').value = b.kategori;
+    if (document.getElementById('budgetLimit')) document.getElementById('budgetLimit').value = b.limit;
+    
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function deleteBudget(id) {
+    // Memakai dialog konfirmasi bawaan atau askConfirmation
+    if (typeof askConfirmation === 'function') {
+        askConfirmation('Hapus Anggaran', 'Apakah Anda yakin ingin menghapus target anggaran ini?', () => {
+            budgets = budgets.filter(b => b.id !== id);
             saveData();
-            document.getElementById('budgetForm').reset();
-            document.getElementById('budgetId').value = '';
             renderBudgets();
+            showToast('Target anggaran dihapus');
+        });
+    } else if (confirm('Apakah Anda yakin ingin menghapus target anggaran ini?')) {
+        budgets = budgets.filter(b => b.id !== id);
+        saveData();
+        renderBudgets();
+        if (typeof showToast === 'function') showToast('Target anggaran dihapus');
+    }
+}
+
+function renderBudgets() {
+    const container = document.getElementById('budgetListContainer');
+    if (!container) return;
+    container.innerHTML = '';
+
+    // Filter transaksi pengeluaran sesuai periode yang dipilih
+    const currentPeriodTxs = transactions.filter(t => 
+        t.tanggal && 
+        t.tanggal.startsWith(typeof selectedPeriod !== 'undefined' ? selectedPeriod : new Date().toISOString().slice(0, 7)) && 
+        t.jenis !== "Pemasukkan"
+    );
+
+    if (budgets.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-8 text-gray-400 col-span-full">
+                <i class="fa-solid fa-sliders text-2xl mb-2 block text-gray-500"></i>
+                <p class="text-xs">Belum ada target anggaran yang dibuat.</p>
+            </div>
+        `;
+        return;
+    }
+
+    budgets.forEach(b => {
+        // Hitung total pengeluaran nyata per kategori
+        const actualSpent = currentPeriodTxs
+            .filter(t => t.kategori === b.kategori)
+            .reduce((acc, curr) => acc + (parseFloat(curr.nominal) || parseFloat(curr.jumlah) || 0), 0);
+
+        const rawPct = b.limit > 0 ? Math.round((actualSpent / b.limit) * 100) : 0;
+        const clampedPct = Math.min(100, rawPct);
+
+        let barColor = 'bg-emerald-500';
+        let textColor = 'text-emerald-500';
+        let statusBadge = '<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-500">Aman</span>';
+
+        if (rawPct > 80 && rawPct <= 100) { 
+            barColor = 'bg-amber-500'; 
+            textColor = 'text-amber-500'; 
+            statusBadge = '<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-500">Mendekati Limit</span>';
+        } else if (rawPct > 100) { 
+            barColor = 'bg-rose-500'; 
+            textColor = 'text-rose-500'; 
+            statusBadge = '<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-500">Melebihi Target!</span>';
         }
 
-        function editBudget(id) {
-            const b = budgets.find(x => x.id === id);
-            if(!b) return;
-            document.getElementById('budgetId').value = b.id;
-            document.getElementById('budgetKategori').value = b.kategori;
-            document.getElementById('budgetLimit').value = b.limit;
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
+        const remaining = b.limit - actualSpent;
+        const formatRupiah = typeof formatRp === 'function' ? formatRp : (val) => 'Rp ' + val.toLocaleString('id-ID');
 
-        function deleteBudget(id) {
-            askConfirmation('Hapus Anggaran', 'Apakah Anda yakin ingin menghapus target anggaran ini?', () => {
-                budgets = budgets.filter(b => b.id !== id);
-                saveData();
-                renderBudgets();
-                showToast('Target anggaran dihapus');
-            });
-        }
-
-        function renderBudgets() {
-            const container = document.getElementById('budgetListContainer');
-            if(!container) return;
-            container.innerHTML = '';
-
-            const currentPeriodTxs = transactions.filter(t => t.tanggal.startsWith(selectedPeriod) && t.jenis !== "Pemasukkan");
-
-            if(budgets.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-8 text-gray-400">
-                        <i class="fa-solid fa-sliders text-2xl mb-2 block text-gray-500"></i>
-                        <p class="text-xs">Belum ada target anggaran yang dibuat.</p>
+        container.innerHTML += `
+            <div class="card-custom p-4 rounded-xl space-y-3 border border-gray-800 hover:border-gray-700 transition">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold text-gray-200 text-sm">${b.kategori}</span>
+                        ${statusBadge}
                     </div>
-                `;
-                return;
-            }
-
-            budgets.forEach(b => {
-                const actualSpent = currentPeriodTxs
-                    .filter(t => t.kategori === b.kategori)
-                    .reduce((acc, curr) => acc + curr.nominal, 0);
-
-                const rawPct = b.limit > 0 ? Math.round((actualSpent / b.limit) * 100) : 0;
-                const clampedPct = Math.min(100, rawPct);
-
-                let barColor = 'bg-emerald-500';
-                let textColor = 'text-emerald-500';
-                let statusBadge = '<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-500">Aman</span>';
-
-                if(rawPct > 80 && rawPct <= 100) { 
-                    barColor = 'bg-amber-500'; 
-                    textColor = 'text-amber-500'; 
-                    statusBadge = '<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-500">Mendekati Limit</span>';
-                } else if(rawPct > 100) { 
-                    barColor = 'bg-rose-500'; 
-                    textColor = 'text-rose-500'; 
-                    statusBadge = '<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-500">Melebihi Target!</span>';
-                }
-
-                const remaining = b.limit - actualSpent;
-
-                container.innerHTML += `
-                    <div class="card-custom p-4 rounded-xl space-y-3 border border-gray-800 hover:border-gray-700 transition">
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                            <div class="flex items-center gap-2">
-                                <span class="font-bold text-gray-200 text-sm">${b.kategori}</span>
-                                ${statusBadge}
-                            </div>
-                            <div class="flex items-center gap-2 no-print">
-                                <button onclick="editBudget('${b.id}')" class="text-blue-500 hover:text-blue-400 p-1 text-xs" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
-                                <button onclick="deleteBudget('${b.id}')" class="text-rose-500 hover:text-rose-400 p-1 text-xs" title="Hapus"><i class="fa-solid fa-trash"></i></button>
-                            </div>
-                        </div>
-
-                        <div class="flex items-baseline justify-between text-xs">
-                            <span class="text-gray-400">Terpakai: <strong class="${textColor} font-mono">${formatRp(actualSpent)}</strong></span>
-                            <span class="text-gray-400">Limit: <strong class="text-gray-200 font-mono">${formatRp(b.limit)}</strong></span>
-                        </div>
-
-                        <div class="w-full bg-gray-800/40 rounded-full h-2.5 overflow-hidden">
-                            <div class="${barColor} h-2.5 rounded-full transition-all duration-500" style="width: ${clampedPct}%"></div>
-                        </div>
-
-                        <div class="flex justify-between items-center text-[11px] font-mono">
-                            <span class="${textColor} font-bold">${rawPct}% Terpakai</span>
-                            <span class="text-gray-400">${remaining >= 0 ? 'Sisa: ' + formatRp(remaining) : 'Over: ' + formatRp(Math.abs(remaining))}</span>
-                        </div>
+                    <div class="flex items-center gap-2 no-print">
+                        <button onclick="editBudget('${b.id}')" class="text-blue-500 hover:text-blue-400 p-1 text-xs" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button onclick="deleteBudget('${b.id}')" class="text-rose-500 hover:text-rose-400 p-1 text-xs" title="Hapus"><i class="fa-solid fa-trash"></i></button>
                     </div>
-                `;
-            });
-        }
+                </div>
+
+                <div class="flex items-baseline justify-between text-xs">
+                    <span class="text-gray-400">Terpakai: <strong class="${textColor} font-mono">${formatRupiah(actualSpent)}</strong></span>
+                    <span class="text-gray-400">Limit: <strong class="text-gray-200 font-mono">${formatRupiah(b.limit)}</strong></span>
+                </div>
+
+                <div class="w-full bg-gray-800/40 rounded-full h-2.5 overflow-hidden">
+                    <div class="${barColor} h-2.5 rounded-full transition-all duration-500" style="width: ${clampedPct}%"></div>
+                </div>
+
+                <div class="flex justify-between items-center text-[11px] font-mono">
+                    <span class="${textColor} font-bold">${rawPct}% Terpakai</span>
+                    <span class="text-gray-400">${remaining >= 0 ? 'Sisa: ' + formatRupiah(remaining) : 'Over: ' + formatRupiah(Math.abs(remaining))}</span>
+                </div>
+            </div>
+        `;
+    });
+}
 
         function saveGoal(e) {
             e.preventDefault();
