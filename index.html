@@ -541,17 +541,25 @@
                             <input type="hidden" id="budgetId">
                             <div>
                                 <label class="block mb-1 font-medium text-gray-300">Kategori Pengeluaran</label>
-                                <select id="budgetKategori" class="w-full input-custom rounded-xl px-3 py-2 font-medium">
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block mb-1 font-medium text-gray-300">Batas Max Anggaran (Rp)</label>
-                                <input type="number" id="budgetLimit" min="1000" required placeholder="Contoh: 1500000" class="w-full input-custom rounded-xl px-3 py-2 font-bold">
-                            </div>
-                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-xl shadow-lg transition flex items-center justify-center gap-2">
-                                <i class="fa-solid fa-floppy-disk"></i> Simpan Target Anggaran
-                            </button>
-                        </form>
+                                <select id="budgetKategori" class="w-full input-custom rounded-xl px-3 py-2 font-medium" required>
+            <option value="" disabled selected>-- Pilih Kategori --</option>
+            <option value="Makanan & Minuman">Makanan & Minuman</option>
+            <option value="Cicilan / Paylater">Cicilan / Paylater</option>
+            <option value="Transportasi">Transportasi</option>
+            <option value="Belanja">Belanja</option>
+            <option value="Tagihan & Utilitas">Tagihan & Utilitas</option>
+            <option value="Hiburan">Hiburan</option>
+            <option value="Lainnya">Lainnya</option>
+        </select>
+    </div>
+    <div>
+        <label class="block mb-1 font-medium text-gray-300">Batas Max Anggaran (Rp)</label>
+        <input type="number" id="budgetLimit" min="1000" required placeholder="Contoh: 1500000" class="w-full input-custom rounded-xl px-3 py-2 font-bold">
+    </div>
+    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-xl shadow-lg transition flex items-center justify-center gap-2">
+        <i class="fa-solid fa-floppy-disk"></i> Simpan Target Anggaran
+    </button>
+</form>
                     </div>
                 </div>
 
