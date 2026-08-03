@@ -556,7 +556,7 @@
         <label class="block mb-1 font-medium text-gray-300">Batas Max Anggaran (Rp)</label>
         <input type="number" id="budgetLimit" min="1000" required placeholder="Contoh: 1500000" class="w-full input-custom rounded-xl px-3 py-2 font-bold">
     </div>
-    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-xl shadow-lg transition flex items-center justify-center gap-2">
+    <button type="submit" onclick="saveBudget(event)" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-xl shadow-lg transition flex items-center justify-center gap-2">
         <i class="fa-solid fa-floppy-disk"></i> Simpan Target Anggaran
     </button>
 </form>
@@ -903,8 +903,7 @@
 
         let transactions = JSON.parse(localStorage.getItem('keuanganku_tx')) || INITIAL_TRANSACTIONS;
 let budgets = JSON.parse(localStorage.getItem('keuanganku_budgets')) || [
-    { id: 'b1', kategori: 'Makanan & Minuman', limit: 1000000 },
-    { id: 'b2', kategori: 'Cicilan / Paylater', limit: 1500000 }
+    { id: 'b1', kategori: 'Wifi/Internet', limit: 100000 }
 ];
 
 let goals = JSON.parse(localStorage.getItem('keuanganku_goals')) || [
@@ -944,6 +943,7 @@ let recurrings = JSON.parse(localStorage.getItem('keuanganku_recurrings')) || [
 
         function saveData() {
     localStorage.setItem('keuanganku_transactions', JSON.stringify(transactions));
+    if (!Array.isArray(budgets)) budgets = [];
     localStorage.setItem('keuanganku_budgets', JSON.stringify(budgets));
     localStorage.setItem('keuanganku_goals', JSON.stringify(goals));
     localStorage.setItem('keuanganku_debts', JSON.stringify(debts));
@@ -1519,6 +1519,7 @@ let recurrings = JSON.parse(localStorage.getItem('keuanganku_recurrings')) || [
 
         function saveBudget(e) {
     if (e) e.preventDefault(); // Mencegah form reload halaman
+if (!Array.isArray(budgets)) budgets = [];
 
     const idInput = document.getElementById('budgetId');
     const kategoriInput = document.getElementById('budgetKategori');
@@ -1612,6 +1613,8 @@ function deleteBudget(id) {
 }
 
 function renderBudgets() {
+    if (!Array.isArray(budgets)) budgets = [];
+
     const container = document.getElementById('budgetListContainer');
     if (!container) return;
     container.innerHTML = '';
