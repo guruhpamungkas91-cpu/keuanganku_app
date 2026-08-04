@@ -901,7 +901,7 @@
             { id: "tx14", jenis: "Pemasukkan", judul: "Gaji Juli 2026", nominal: 5968038, dompet: "Bank BCA", kategori: "Gaji", tanggal: "2026-07-30" }
         ];
 
-        let transactions = JSON.parse(localStorage.getItem('keuanganku_tx')) || INITIAL_TRANSACTIONS;
+        let transactions = JSON.parse(localStorage.getItem('keuanganku_transactions')) || [];
 let budgets = JSON.parse(localStorage.getItem('keuanganku_budgets')) || [
     { id: 'b1', kategori: 'Wifi/Internet', limit: 100000 }
 ];
@@ -921,7 +921,7 @@ let recurrings = JSON.parse(localStorage.getItem('keuanganku_recurrings')) || [
     { id: 'r2', name: 'Wifi Indihome / Internet', amount: 350000, day: 5, dompet: 'ShopeePay' }
 ];
 
-        let selectedPeriod = localStorage.getItem('keuanganku_period') || '2026-07';
+        let selectedPeriod = localStorage.getItem('keuanganku_period') || '2026-08';
         let pendingConfirmCallback = null;
         let chartIncExp = null;
         let chartProp = null;
@@ -952,7 +952,7 @@ let recurrings = JSON.parse(localStorage.getItem('keuanganku_recurrings')) || [
     if (typeof budgets !== 'undefined') {
         localStorage.setItem('keuanganku_budgets', JSON.stringify(budgets));
     }
-}
+
     localStorage.setItem('keuanganku_budgets', JSON.stringify(budgets));
     localStorage.setItem('keuanganku_goals', JSON.stringify(goals));
     localStorage.setItem('keuanganku_debts', JSON.stringify(debts));
