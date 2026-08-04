@@ -272,13 +272,13 @@
 
         <section id="content-transaksi" class="tab-content space-y-6">
 
-    <!-- TAB 1: TRANSAKSI (PEMBUKA TAG WAJIB ADA DI SINI) -->
+    <!-- TAB 1: TRANSAKSI -->
 <section id="content-transaksi" class="tab-content space-y-6">
 
-    <!-- AREA ATAS: FORM INPUT (KIRI) & MINI SUMMARY CARD (KANAN) -->
+    <!-- AREA ATAS: FORM INPUT (KIRI) & QUICK CARDS (KANAN) -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
-        <!-- FORM INPUT TRANSAKSI (4 KOLOM) -->
+        <!-- FORM INPUT TRANSAKSI (4 KOLOM KIRI) -->
         <div class="lg:col-span-4 no-print">
             <div class="card-custom rounded-2xl p-5 shadow-xl border border-gray-800 space-y-4">
                 
@@ -387,7 +387,7 @@
             </div>
         </div>
 
-        <!-- REKAP QUICK CARDS (8 KOLOM SISA DI ATAS) -->
+        <!-- REKAP SUMMARY CARDS (8 KOLOM KANAN) -->
         <div class="lg:col-span-8 space-y-4">
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <!-- Card Pemasukkan -->
@@ -407,18 +407,18 @@
                 </div>
             </div>
 
-            <!-- Card Banner Info/Tips Keuangan Mini -->
+            <!-- Banner Info Fitur Transfer -->
             <div class="card-custom p-5 rounded-2xl border border-gray-800 flex items-center justify-between bg-gradient-to-r from-blue-900/20 to-transparent">
                 <div>
                     <h4 class="font-bold text-sm text-white">Fitur Transfer Antar Dompet Aktif! 🚀</h4>
-                    <p class="text-xs text-gray-400 mt-1">Sekarang saldo dompet e-wallet & tunai kamu tidak akan minus lagi saat pindah kas.</p>
+                    <p class="text-xs text-gray-400 mt-1">Pindahkan saldo antar e-wallet/bank tanpa merusak rekap pengeluaran asli kamu.</p>
                 </div>
             </div>
         </div>
 
     </div>
 
-    <!-- AREA BAWAH: TABEL DAFTAR TRANSAKSI FULL 100% LEBAR -->
+    <!-- AREA BAWAH: TABEL DAFTAR TRANSAKSI LEBAR (100%) -->
     <div class="card-custom p-5 rounded-2xl border border-gray-800 space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-800/50">
             <div>
@@ -426,16 +426,25 @@
                 <p class="text-xs text-gray-400">Menampilkan semua transaksi untuk periode terpilih</p>
             </div>
             
-            <!-- Tempat Filter Pencarian / Dropdown Kategori kamu -->
+            <!-- Area Filter Pencarian & Dropdown Kategori -->
+            <div class="flex flex-wrap items-center gap-2">
+                <input type="text" id="searchTx" oninput="renderTransactions()" placeholder="Cari transaksi..." class="input-custom rounded-xl px-3 py-1.5 text-xs">
+                <select id="filterKategori" onchange="renderTransactions()" class="input-custom rounded-xl px-3 py-1.5 text-xs">
+                    <option value="ALL">Semua Kategori</option>
+                </select>
+                <select id="filterDompet" onchange="renderTransactions()" class="input-custom rounded-xl px-3 py-1.5 text-xs">
+                    <option value="ALL">Semua Dompet</option>
+                </select>
+            </div>
         </div>
 
-        <!-- Tabel Transaksi Kamu (Otomatis Full Kesamping Mewah) -->
+        <!-- Tempat JS nampilin tabel transaksi -->
         <div id="transactionListContainer" class="overflow-x-auto">
-            <!-- Isi tabel transaksi dirender di sini via JS -->
+            <!-- Table dirender via JS -->
         </div>
     </div>
 
-</section> <!-- PENUTUP TAB 1 TRANSAKSI -->
+</section>
 
                             <div>
                                 <label class="block mb-1.5 font-medium text-gray-300">Kategori</label>
