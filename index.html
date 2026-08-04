@@ -305,53 +305,53 @@
 </select>
 
                             <div>
-                                <label class="block mb-1.5 font-medium text-gray-300">Judul Transaksi</label>
-                                <input type="text" id="txJudul" required placeholder="Contoh: Beli Token Listrik, Makan Siang" class="w-full input-custom rounded-xl px-3 py-2">
-                            </div>
-
-                            <div>
-                                <label class="block mb-1.5 font-medium text-gray-300">Nominal (Rp)</label>
-                                <div class="relative">
-                                    <span class="absolute left-3 top-2 text-gray-400 font-bold">Rp</span>
-                                    <input type="number" id="txNominal" min="1" required placeholder="0" class="w-full input-custom rounded-xl pl-9 pr-3 py-2 font-bold text-sm">
-                                </div>
-                            </div>
-
-                            <div>
-                                <!-- Grid Dompet asal & Tujuan -->
-<div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-    <!-- Dompet Asal -->
-    <div>
-    <label class="block mb-1.5 font-medium text-gray-300">Sumber Dana / Dompet</label>
-    <select id="txDompet" class="w-full input-custom rounded-xl px-3 py-2 font-medium">
-        <option value="Bank BCA">Bank BCA</option>
-        <option value="BRI">BRI</option>
-        <option value="MANDIRI">MANDIRI</option>
-        <option value="BSI">BSI</option>
-        <option value="Seabank">Seabank</option>
-        <option value="ShopeePay">ShopeePay</option>
-        <option value="GoPay">GoPay</option>
-        <option value="DANA">DANA</option>
-        <option value="OVO">OVO</option>
-        <option value="Tunai / Cash" selected>Tunai / Cash</option>
-    </select>
+    <label class="block mb-1.5 font-medium text-gray-300">Judul Transaksi</label>
+    <input type="text" id="txJudul" required placeholder="Contoh: Beli Token Listrik, Makan Siang" class="w-full input-custom rounded-xl px-3 py-2">
 </div>
 
+<div>
+    <label class="block mb-1.5 font-medium text-gray-300">Nominal (Rp)</label>
+    <div class="relative">
+        <span class="absolute left-3 top-2 text-gray-400 font-bold">Rp</span>
+        <input type="number" id="txNominal" min="1" required placeholder="0" class="w-full input-custom rounded-xl pl-9 pr-3 py-2 font-bold text-sm">
+    </div>
+</div>
+
+<!-- Grid Dompet Asal & Tujuan -->
+<div class="grid grid-cols-1 gap-3">
+    <!-- Dompet Asal -->
+    <div>
+        <label class="block mb-1.5 font-medium text-gray-300">Sumber Dana / Dompet</label>
+        <select id="txDompet" class="w-full input-custom rounded-xl px-3 py-2 font-medium">
+            <option value="Bank BCA">Bank BCA</option>
+            <option value="BRI">BRI</option>
+            <option value="MANDIRI">MANDIRI</option>
+            <option value="BSI">BSI</option>
+            <option value="Seabank">Seabank</option>
+            <option value="ShopeePay">ShopeePay</option>
+            <option value="GoPay">GoPay</option>
+            <option value="DANA">DANA</option>
+            <option value="OVO">OVO</option>
+            <option value="Tunai / Cash" selected>Tunai / Cash</option>
+        </select>
+    </div>
+
     <!-- Dompet Tujuan (Awalnya tersembunyi / hidden) -->
-    <div id="containerDompetTujuan" class="hidden mt-3">
-    <label class="block mb-1.5 font-medium text-gray-300">Ke Dompet (Tujuan)</label>
-    <select id="txDompetTujuan" class="w-full input-custom rounded-xl px-3 py-2 font-medium">
-        <option value="Bank BCA">Bank BCA</option>
-        <option value="BRI">BRI</option>
-        <option value="MANDIRI">MANDIRI</option>
-        <option value="BSI">BSI</option>
-        <option value="Seabank">Seabank</option>
-        <option value="ShopeePay" selected>ShopeePay</option>
-        <option value="GoPay">GoPay</option>
-        <option value="DANA">DANA</option>
-        <option value="OVO">OVO</option>
-        <option value="Tunai / Cash">Tunai / Cash</option>
-    </select>
+    <div id="containerDompetTujuan" class="hidden">
+        <label class="block mb-1.5 font-medium text-gray-300">Ke Dompet (Tujuan)</label>
+        <select id="txDompetTujuan" class="w-full input-custom rounded-xl px-3 py-2 font-medium">
+            <option value="Bank BCA">Bank BCA</option>
+            <option value="BRI">BRI</option>
+            <option value="MANDIRI">MANDIRI</option>
+            <option value="BSI">BSI</option>
+            <option value="Seabank">Seabank</option>
+            <option value="ShopeePay" selected>ShopeePay</option>
+            <option value="GoPay">GoPay</option>
+            <option value="DANA">DANA</option>
+            <option value="OVO">OVO</option>
+            <option value="Tunai / Cash">Tunai / Cash</option>
+        </select>
+    </div>
 </div>
 
                             <div>
