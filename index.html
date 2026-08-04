@@ -1203,11 +1203,13 @@ let recurrings = JSON.parse(localStorage.getItem('keuanganku_recurrings')) || [
         function saveTransaction(e) {
     if (e) e.preventDefault();
 
-    // 1. Ambil input ID (Hidden Input)
+    // 1. Ambil ID
     const idInput = document.getElementById('txId') || document.getElementById('transactionId');
     const id = idInput ? idInput.value : '';
 
-    // 2. Ambil nilai input lainnya
+    // 2. Ambil SEMUA Nilai Input (Termasuk Judul & Dompet!)
+    const judul = document.getElementById('txJudul')?.value || document.getElementById('judul')?.value || '';
+    const dompet = document.getElementById('txDompet')?.value || document.getElementById('dompet')?.value || 'Tunai / Cash';
     const tanggal = document.getElementById('txTanggal')?.value || document.getElementById('tanggal')?.value;
     const kategori = document.getElementById('txKategori')?.value || document.getElementById('kategori')?.value;
     const nominal = parseFloat(document.getElementById('txNominal')?.value || document.getElementById('nominal')?.value || 0);
@@ -1219,21 +1221,31 @@ let recurrings = JSON.parse(localStorage.getItem('keuanganku_recurrings')) || [
         return;
     }
 
-    // Guard Clamp: Pastikan transactions selalu Array
     if (!Array.isArray(transactions)) transactions = [];
 
     if (id) {
-        // 🔴 MODE EDIT: Cari index transaksi berdasarkan ID
+        // 🔴 MODE EDIT: Cari index & update SEMUA properti tanpa ada yang kehapus
         const idx = transactions.findIndex(t => String(t.id) === String(id));
         if (idx !== -1) {
-            // Update transaksi pada index tersebut, PASTIKAN ID LAMA TETAP DIPAKAI
-            transactions[idx] = { id, tanggal, kategori, nominal, jenis, catatan };
+            transactions[idx] = { 
+                ...transactions[idx], // Pertahankan field pendukung lain jika ada
+                id, 
+                judul: judul || transactions[idx].judul || 'Tanpa Judul', 
+                dompet, 
+                tanggal, 
+                kategori, 
+                nominal, 
+                jenis, 
+                catatan 
+            };
             if (typeof showToast === 'function') showToast('Transaksi berhasil diperbarui');
         }
     } else {
         // 🟢 MODE TAMBAH BARU
         const newTx = {
             id: 'tx_' + Date.now(),
+            judul: judul || 'Tanpa Judul',
+            dompet,
             tanggal,
             kategori,
             nominal,
@@ -1244,152 +1256,85 @@ let recurrings = JSON.parse(localStorage.getItem('keuanganku_recurrings')) || [
         if (typeof showToast === 'function') showToast('Transaksi berhasil ditambahkan');
     }
 
-    // 🔴 3. WAJIB! SIMPAN PERMANEN KE LOCALSTORAGE (Ini yang bikin tidak hilang pas F5)
+    // 3. Simpan ke LocalStorage
     if (typeof saveData === 'function') {
         saveData();
     } else {
         localStorage.setItem('keuanganku_transactions', JSON.stringify(transactions));
     }
 
-    // 4. Reset Form & Hidden ID Input
-    const form = document.getElementById('transactionForm') || document.getElementById('txForm');
-    if (form) form.reset();
-    if (idInput) idInput.value = '';
+    // 4. Reset Form
+    resetForm();
 
-    // 5. Render Ulang Semua Komponen Tampilan
+    // 5. Render Ulang
     if (typeof renderAll === 'function') {
         renderAll();
     } else {
         if (typeof renderTransactions === 'function') renderTransactions();
-        if (typeof renderBudgets === 'function') renderBudgets();
-        if (typeof renderSummary === 'function') renderSummary();
     }
 }
 
-        function editTransaction(id) {
-    // Pastikan pencarian id aman (dikonversi ke String)
+function editTransaction(id) {
     const t = transactions.find(x => String(x.id) === String(id));
     if (!t) return;
 
-    // Isikan data transaksi ke form
+    // Set Hidden ID
     const idInput = document.getElementById('txId') || document.getElementById('transactionId');
-    if (idInput) idInput.value = t.id; // 🔴 WAJIB KETANAM ID-NYA DI FORM
+    if (idInput) idInput.value = t.id;
 
-    if (document.getElementById('txTanggal')) document.getElementById('txTanggal').value = t.tanggal;
-    if (document.getElementById('txKategori')) document.getElementById('txKategori').value = t.kategori;
-    if (document.getElementById('txNominal')) document.getElementById('txNominal').value = t.nominal;
-    if (document.getElementById('txJenis')) document.getElementById('txJenis').value = t.jenis;
-    if (document.getElementById('txCatatan')) document.getElementById('txCatatan').value = t.catatan || '';
+    // Isikan SEMUA field ke Form
+    const setVal = (ids, val) => {
+        ids.forEach(i => {
+            const el = document.getElementById(i);
+            if (el) el.value = val;
+        });
+    };
 
-    // Scroll halus ke form
+    setVal(['txJudul', 'judul'], t.judul || t.title || '');
+    setVal(['txDompet', 'dompet'], t.dompet || t.wallet || 'Tunai / Cash');
+    setVal(['txTanggal', 'tanggal'], t.tanggal || '');
+    setVal(['txJenis', 'jenis'], t.jenis || 'Pengeluaran Harian');
+    
+    // Update opsi kategori dulu sesuai jenis transaksi
+    if (typeof updateCategoriesOptions === 'function') updateCategoriesOptions();
+
+    setVal(['txKategori', 'kategori'], t.kategori || '');
+    setVal(['txNominal', 'nominal'], t.nominal || 0);
+    setVal(['txCatatan', 'catatan'], t.catatan || '');
+
+    // Ubah UI Form Mode Edit
+    const titleEl = document.getElementById('formTitle');
+    if (titleEl) titleEl.textContent = "Edit Transaksi";
+
+    const btnSubmit = document.getElementById('btnSubmitTx');
+    if (btnSubmit) btnSubmit.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan';
+
+    const cancelBtn = document.getElementById('cancelEditBtn');
+    if (cancelBtn) cancelBtn.classList.remove('hidden');
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-        function resetForm() {
-            document.getElementById('txForm').reset();
-            document.getElementById('txId').value = '';
-            document.getElementById('txTanggal').value = new Date().toISOString().split('T')[0];
-            document.getElementById('formTitle').textContent = "Tambah Transaksi Baru";
-            document.getElementById('btnSubmitTx').innerHTML = '<i class="fa-solid fa-plus-circle"></i> Simpan Transaksi';
-            document.getElementById('cancelEditBtn').classList.add('hidden');
-            updateCategoriesOptions();
-        }
+function resetForm() {
+    const form = document.getElementById('txForm') || document.getElementById('transactionForm');
+    if (form) form.reset();
 
-        function deleteTransaction(id) {
-            askConfirmation('Hapus Transaksi', 'Apakah Anda yakin ingin menghapus transaksi ini?', () => {
-                transactions = transactions.filter(t => t.id !== id);
-                saveData();
-                renderAll();
-                showToast('Transaksi dihapus');
-            });
-        }
+    const idInput = document.getElementById('txId') || document.getElementById('transactionId');
+    if (idInput) idInput.value = '';
 
-        function renderTransactions() {
-    const tbody = document.getElementById('txTableBody');
-    if (!tbody) return;
+    const tglInput = document.getElementById('txTanggal') || document.getElementById('tanggal');
+    if (tglInput) tglInput.value = new Date().toISOString().split('T')[0];
 
-    const searchInput = document.getElementById('filterSearch');
-    const search = searchInput ? searchInput.value.toLowerCase() : '';
+    const titleEl = document.getElementById('formTitle');
+    if (titleEl) titleEl.textContent = "Tambah Transaksi Baru";
 
-    const filterKatInput = document.getElementById('filterKategori');
-    const filterKat = filterKatInput ? filterKatInput.value : '';
+    const btnSubmit = document.getElementById('btnSubmitTx');
+    if (btnSubmit) btnSubmit.innerHTML = '<i class="fa-solid fa-plus-circle"></i> Simpan Transaksi';
 
-    const filterDomInput = document.getElementById('filterDompet');
-    const filterDom = filterDomInput ? filterDomInput.value : '';
+    const cancelBtn = document.getElementById('cancelEditBtn');
+    if (cancelBtn) cancelBtn.classList.add('hidden');
 
-    // Guard: Pastikan transactions selalu Array
-    if (!Array.isArray(transactions)) transactions = [];
-
-    // Filter berdasarkan Periode (Aman jika t.tanggal undefined/null)
-    let filtered = transactions.filter(t => t && t.tanggal && String(t.tanggal).startsWith(selectedPeriod || ''));
-
-    // Filter Pencarian (Aman dari undefined/null)
-    if (search) {
-        filtered = filtered.filter(t => {
-            const judulStr = String(t.judul || t.title || t.catatan || '').toLowerCase();
-            const katStr = String(t.kategori || '').toLowerCase();
-            return judulStr.includes(search) || katStr.includes(search);
-        });
-    }
-
-    if (filterKat) {
-        filtered = filtered.filter(t => t.kategori === filterKat);
-    }
-    if (filterDom) {
-        filtered = filtered.filter(t => (t.dompet || t.wallet) === filterDom);
-    }
-
-    // Update Badge & Subtitle
-    const badgeCount = document.getElementById('badgeTxCount');
-    if (badgeCount) badgeCount.textContent = filtered.length;
-
-    const subtitle = document.getElementById('txListSubtitle');
-    if (subtitle) subtitle.textContent = `Menampilkan ${filtered.length} transaksi untuk periode ${selectedPeriod}`;
-
-    tbody.innerHTML = '';
-
-    if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-gray-400">Tidak ada transaksi ditemukan untuk periode ini.</td></tr>`;
-    } else {
-        filtered.forEach(t => {
-            const isIncome = t.jenis === "Pemasukkan";
-            
-            // 🟢 FALLBACK GUARD (Biar gak tampil tulisan "undefined")
-            const displayJudul = t.judul || t.title || t.catatan || 'Tanpa Judul';
-            const displayDompet = t.dompet || t.wallet || t.sumber || 'Tunai / Cash';
-            const displayKategori = t.kategori || 'Lainnya';
-            const displayTanggal = t.tanggal || '-';
-
-            const badgeClass = typeof getDompetBadgeClass === 'function' ? getDompetBadgeClass(displayDompet) : 'bg-gray-800 text-gray-300';
-            
-            const tr = document.createElement('tr');
-            tr.className = "hover:bg-white/5 transition border-b border-gray-800/40";
-            tr.innerHTML = `
-                <td class="py-3 px-3 whitespace-nowrap text-gray-400 font-mono text-[11px]">${displayTanggal}</td>
-                <td class="py-3 px-3 font-semibold text-gray-200">${displayJudul}</td>
-                <td class="py-3 px-3">
-                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-md ${badgeClass}">${displayDompet}</span>
-                </td>
-                <td class="py-3 px-3">
-                    <span class="text-[10px] bg-gray-500/10 border border-gray-400/30 px-2 py-0.5 rounded-full text-gray-300">${displayKategori}</span>
-                </td>
-                <td class="py-3 px-3 text-right font-bold font-mono ${isIncome ? 'text-emerald-500' : 'text-rose-500'}">
-                    ${isIncome ? '+' : '-'} ${typeof formatRp === 'function' ? formatRp(t.nominal || 0) : t.nominal}
-                </td>
-                <td class="py-3 px-2 text-center no-print">
-                    <div class="flex items-center justify-center gap-1.5">
-                        <button onclick="editTransaction('${t.id}')" title="Edit" class="text-blue-500 hover:text-blue-400 p-1">
-                            <i class="fa-solid fa-pen-to-square"></i>
-                        </button>
-                        <button onclick="deleteTransaction('${t.id}')" title="Hapus" class="text-rose-500 hover:text-rose-400 p-1">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </div>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
-    }
+    if (typeof updateCategoriesOptions === 'function') updateCategoriesOptions();
 
             const currentPeriodTxs = transactions.filter(t => t.tanggal.startsWith(selectedPeriod));
             let totalIncome = 0;
