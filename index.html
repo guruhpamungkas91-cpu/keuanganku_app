@@ -1114,17 +1114,106 @@ let recurrings = JSON.parse(localStorage.getItem('keuanganku_recurrings')) || [
         }
 
         function renderAll() {
-            renderTransactions();
-            renderBudgets();
-            renderGoals();
-            renderDebts();
-            renderRecurring();
+    if (typeof renderTransactions === 'function') renderTransactions();
+    if (typeof renderBudgets === 'function') renderBudgets();
+    if (typeof renderGoals === 'function') renderGoals();
+    if (typeof renderDebts === 'function') renderDebts();
+    if (typeof renderRecurring === 'function') renderRecurring();
+    if (typeof renderSummary === 'function') renderSummary();
+    if (typeof renderAnnualSummary === 'function') renderAnnualSummary();
             
             const activeTab = document.querySelector('.tab-content:not(.hidden)')?.id;
             if (activeTab === 'content-laporan') renderLaporanCharts();
             if (activeTab === 'content-rekap') renderAnnualSummary();
         }
+    
+        function renderTransactions() {
+    const tbody = document.getElementById('txTableBody');
+    if (!tbody) return;
 
+    const searchInput = document.getElementById('filterSearch');
+    const search = searchInput ? searchInput.value.toLowerCase() : '';
+
+    const filterKatInput = document.getElementById('filterKategori');
+    const filterKat = filterKatInput ? filterKatInput.value : '';
+
+    const filterDomInput = document.getElementById('filterDompet');
+    const filterDom = filterDomInput ? filterDomInput.value : '';
+
+    // Guard: Pastikan transactions selalu Array
+    if (!Array.isArray(transactions)) transactions = [];
+
+    // Filter berdasarkan Periode (Aman jika t.tanggal undefined/null)
+    let filtered = transactions.filter(t => t && t.tanggal && String(t.tanggal).startsWith(selectedPeriod || ''));
+
+    // Filter Pencarian (Aman dari undefined/null)
+    if (search) {
+        filtered = filtered.filter(t => {
+            const judulStr = String(t.judul || t.title || t.catatan || '').toLowerCase();
+            const katStr = String(t.kategori || '').toLowerCase();
+            return judulStr.includes(search) || katStr.includes(search);
+        });
+    }
+
+    if (filterKat) {
+        filtered = filtered.filter(t => t.kategori === filterKat);
+    }
+    if (filterDom) {
+        filtered = filtered.filter(t => (t.dompet || t.wallet) === filterDom);
+    }
+
+    // Update Badge & Subtitle
+    const badgeCount = document.getElementById('badgeTxCount');
+    if (badgeCount) badgeCount.textContent = filtered.length;
+
+    const subtitle = document.getElementById('txListSubtitle');
+    if (subtitle) subtitle.textContent = `Menampilkan ${filtered.length} transaksi untuk periode ${selectedPeriod}`;
+
+    tbody.innerHTML = '';
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-gray-400">Tidak ada transaksi ditemukan untuk periode ini.</td></tr>`;
+    } else {
+        filtered.forEach(t => {
+            const isIncome = t.jenis === "Pemasukkan";
+            
+            // Fallback Guard (Biar gak tampil tulisan "undefined")
+            const displayJudul = t.judul || t.title || t.catatan || 'Tanpa Judul';
+            const displayDompet = t.dompet || t.wallet || t.sumber || 'Tunai / Cash';
+            const displayKategori = t.kategori || 'Lainnya';
+            const displayTanggal = t.tanggal || '-';
+
+            const badgeClass = typeof getDompetBadgeClass === 'function' ? getDompetBadgeClass(displayDompet) : 'bg-gray-800 text-gray-300';
+            
+            const tr = document.createElement('tr');
+            tr.className = "hover:bg-white/5 transition border-b border-gray-800/40";
+            tr.innerHTML = `
+                <td class="py-3 px-3 whitespace-nowrap text-gray-400 font-mono text-[11px]">${displayTanggal}</td>
+                <td class="py-3 px-3 font-semibold text-gray-200">${displayJudul}</td>
+                <td class="py-3 px-3">
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-md ${badgeClass}">${displayDompet}</span>
+                </td>
+                <td class="py-3 px-3">
+                    <span class="text-[10px] bg-gray-500/10 border border-gray-400/30 px-2 py-0.5 rounded-full text-gray-300">${displayKategori}</span>
+                </td>
+                <td class="py-3 px-3 text-right font-bold font-mono ${isIncome ? 'text-emerald-500' : 'text-rose-500'}">
+                    ${isIncome ? '+' : '-'} ${typeof formatRp === 'function' ? formatRp(t.nominal || 0) : t.nominal}
+                </td>
+                <td class="py-3 px-2 text-center no-print">
+                    <div class="flex items-center justify-center gap-1.5">
+                        <button onclick="editTransaction('${t.id}')" title="Edit" class="text-blue-500 hover:text-blue-400 p-1">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="deleteTransaction('${t.id}')" title="Hapus" class="text-rose-500 hover:text-rose-400 p-1">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+}
         function refreshData() {
             renderAll();
             showToast('Data berhasil diperbarui!');
