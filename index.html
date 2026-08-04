@@ -1536,170 +1536,180 @@ function resetForm() {
         }
 
         function renderLaporanCharts() {
-            const allDompets = ["Bank BCA", "BRI", "MANDIRI", "BSI", "Seabank", "ShopeePay", "GoPay", "DANA", "OVO", "Tunai / Cash"];
-            const walletGrid = document.getElementById('walletBalancesGrid');
-            walletGrid.innerHTML = '';
+    const allDompets = ["Bank BCA", "BRI", "MANDIRI", "BSI", "Seabank", "ShopeePay", "GoPay", "DANA", "OVO", "Tunai / Cash"];
+    const walletGrid = document.getElementById('walletBalancesGrid');
+    walletGrid.innerHTML = '';
 
-            allDompets.forEach(dompet => {
-                const walletTxs = transactions.filter(t => t.dompet === dompet);
-                if (walletTxs.length === 0 && (dompet !== "Bank BCA" && dompet !== "ShopeePay" && dompet !== "Tunai / Cash" && dompet !== "DANA")) {
-                    return;
-                }
+    allDompets.forEach(dompet => {
+        const walletTxs = transactions.filter(t => t.dompet === dompet);
+        if (walletTxs.length === 0 && (dompet !== "Bank BCA" && dompet !== "ShopeePay" && dompet !== "Tunai / Cash" && dompet !== "DANA")) {
+            return;
+        }
 
-                let balance = 0;
-                walletTxs.forEach(t => {
-                    if (t.jenis === "Pemasukkan") balance += t.nominal;
-                    else balance -= t.nominal;
-                });
+        let balance = 0;
+        walletTxs.forEach(t => {
+            if (t.jenis === "Pemasukkan") balance += t.nominal;
+            else balance -= t.nominal;
+        });
 
-                const isPositive = balance >= 0;
+        const isPositive = balance >= 0;
 
-                walletGrid.innerHTML += `
-                    <div class="card-custom p-4 rounded-2xl border border-gray-800 hover:border-gray-700 transition space-y-2">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-bold tracking-wider text-gray-300 uppercase">${dompet}</span>
-                            <i class="fa-solid fa-wallet text-gray-400 text-xs"></i>
-                        </div>
-                        <div class="text-lg font-black font-mono ${isPositive ? 'text-emerald-500' : 'text-rose-500'}">
-                            ${formatRp(balance)}
-                        </div>
-                        <p class="text-[10px] text-gray-400">Saldo Net Akumulasi</p>
-                    </div>
-                `;
-            });
+        walletGrid.innerHTML += `
+            <div class="card-custom p-4 rounded-2xl border border-gray-800 hover:border-gray-700 transition space-y-2">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold tracking-wider text-gray-300 uppercase">${dompet}</span>
+                    <i class="fa-solid fa-wallet text-gray-400 text-xs"></i>
+                </div>
+                <div class="text-lg font-black font-mono ${isPositive ? 'text-emerald-500' : 'text-rose-500'}">
+                    ${formatRp(balance)}
+                </div>
+                <p class="text-[10px] text-gray-400">Saldo Net Akumulasi</p>
+            </div>
+        `;
+    });
 
-            const currentTxs = transactions.filter(t => t.tanggal.startsWith(selectedPeriod));
-            
-            let incomeTotal = 0;
-            let expTetapTotal = 0;
-            let expHarianTotal = 0;
-            let expLainTotal = 0;
+    // 🟢 1. HITUNG SALDO AWAL BAWAAN BULAN LALU
+    const saldoAwal = typeof getSaldoAwalBulan === 'function' ? getSaldoAwalBulan(selectedPeriod) : 0;
 
-            const expCategories = {};
+    const currentTxs = transactions.filter(t => t.tanggal && String(t.tanggal).startsWith(selectedPeriod));
+    
+    let incomeTotal = 0;
+    let expTetapTotal = 0;
+    let expHarianTotal = 0;
+    let expLainTotal = 0;
 
-            currentTxs.forEach(t => {
-                if(t.jenis === "Pemasukkan") {
-                    incomeTotal += t.nominal;
-                } else {
-                    if (t.jenis === "Pengeluaran Tetap") expTetapTotal += t.nominal;
-                    else if (t.jenis === "Pengeluaran Harian") expHarianTotal += t.nominal;
-                    else expLainTotal += t.nominal;
+    const expCategories = {};
 
-                    expCategories[t.kategori] = (expCategories[t.kategori] || 0) + t.nominal;
-                }
-            });
+    currentTxs.forEach(t => {
+        if(t.jenis === "Pemasukkan") {
+            incomeTotal += t.nominal;
+        } else {
+            if (t.jenis === "Pengeluaran Tetap") expTetapTotal += t.nominal;
+            else if (t.jenis === "Pengeluaran Harian") expHarianTotal += t.nominal;
+            else expLainTotal += t.nominal;
 
-            const totalExpense = expTetapTotal + expHarianTotal + expLainTotal;
-            const netSavings = incomeTotal - totalExpense;
+            expCategories[t.kategori] = (expCategories[t.kategori] || 0) + t.nominal;
+        }
+    });
 
-            document.getElementById('laporanTotalIncome').textContent = formatRp(incomeTotal);
-            document.getElementById('laporanExpenseTetap').textContent = formatRp(expTetapTotal);
-            document.getElementById('laporanExpenseHarian').textContent = formatRp(expHarianTotal);
-            document.getElementById('laporanNetSavings').textContent = formatRp(netSavings);
-            document.getElementById('laporanPeriodLabel1').textContent = `Bulan ${selectedPeriod}`;
+    const totalExpense = expTetapTotal + expHarianTotal + expLainTotal;
+    
+    // 🟢 2. DANA TERSEDIA = Saldo Awal Bulan Lalu + Pemasukkan Bulan Ini
+    const totalDanaTersedia = saldoAwal + incomeTotal;
+    
+    // 🟢 3. SISA TABUNGAN REAL KAS
+    const netSavings = totalDanaTersedia - totalExpense;
 
-            const savingsRatio = incomeTotal > 0 ? Math.round((netSavings / incomeTotal) * 100) : (netSavings < 0 ? -100 : 0);
-            const badgeEl = document.getElementById('healthStatusBadge');
-            const descEl = document.getElementById('healthStatusDesc');
-            const ratioValEl = document.getElementById('savingsRatioVal');
-            const ratioBarEl = document.getElementById('savingsRatioBar');
+    document.getElementById('laporanTotalIncome').textContent = formatRp(incomeTotal);
+    document.getElementById('laporanExpenseTetap').textContent = formatRp(expTetapTotal);
+    document.getElementById('laporanExpenseHarian').textContent = formatRp(expHarianTotal);
+    document.getElementById('laporanNetSavings').textContent = formatRp(netSavings);
+    document.getElementById('laporanPeriodLabel1').textContent = `Bulan ${selectedPeriod}`;
 
-            ratioValEl.textContent = `${savingsRatio}%`;
-            const clampedWidth = Math.max(0, Math.min(100, savingsRatio));
-            ratioBarEl.style.width = `${clampedWidth}%`;
+    // 🟢 4. PENILAIAN FINANSIAL BERDASARKAN DANA TERSEDIA
+    const savingsRatio = totalDanaTersedia > 0 ? Math.round((netSavings / totalDanaTersedia) * 100) : (netSavings < 0 ? -100 : 0);
+    const badgeEl = document.getElementById('healthStatusBadge');
+    const descEl = document.getElementById('healthStatusDesc');
+    const ratioValEl = document.getElementById('savingsRatioVal');
+    const ratioBarEl = document.getElementById('savingsRatioBar');
 
-            if (savingsRatio >= 30) {
-                badgeEl.textContent = "Sangat Sehat";
-                badgeEl.className = "text-emerald-500";
-                descEl.textContent = "Luar biasa! Alokasi sisa tabunganmu mencapai atau melebihi 30%. Keuanganmu berada dalam kondisi prima.";
-                ratioBarEl.className = "bg-emerald-500 h-2.5 rounded-full transition-all duration-500";
-            } else if (savingsRatio >= 15) {
-                badgeEl.textContent = "Sehat";
-                badgeEl.className = "text-blue-500";
-                descEl.textContent = "Bagus! Kamu berhasil menyisihkan antara 15% - 29% pemasukanmu bulan ini.";
-                ratioBarEl.className = "bg-blue-500 h-2.5 rounded-full transition-all duration-500";
-            } else if (savingsRatio >= 0) {
-                badgeEl.textContent = "Waspada";
-                badgeEl.className = "text-amber-500";
-                descEl.textContent = "Hati-hati, alokasi sisa tabunganmu kurang dari 15%. Kurangi pengeluaran harian yang tidak perlu.";
-                ratioBarEl.className = "bg-amber-500 h-2.5 rounded-full transition-all duration-500";
-            } else {
-                badgeEl.textContent = "Bahaya / Defisit";
-                badgeEl.className = "text-rose-500";
-                descEl.textContent = "Perhatian! Pengeluaranmu melebihi total pemasukan bulan ini (Defisit).";
-                ratioBarEl.className = "bg-rose-500 h-2.5 rounded-full transition-all duration-500";
-            }
+    ratioValEl.textContent = `${savingsRatio}%`;
+    const clampedWidth = Math.max(0, Math.min(100, savingsRatio));
+    ratioBarEl.style.width = `${clampedWidth}%`;
 
-            const chartTextColor = getChartTextColor();
-            const chartGridColor = getChartGridColor();
+    if (netSavings < 0) {
+        badgeEl.textContent = "Bahaya / Defisit";
+        badgeEl.className = "text-rose-500 font-extrabold";
+        descEl.textContent = "Perhatian! Total pengeluaranmu melebihi seluruh saldo kas yang kamu miliki.";
+        ratioBarEl.className = "bg-rose-500 h-2.5 rounded-full transition-all duration-500";
+    } else if (savingsRatio >= 30) {
+        badgeEl.textContent = "Sangat Sehat";
+        badgeEl.className = "text-emerald-500 font-extrabold";
+        descEl.textContent = "Luar biasa! Keuanganmu sangat aman. Sisa dana kas bersih kamu siap diinvestasikan/ditabung.";
+        ratioBarEl.className = "bg-emerald-500 h-2.5 rounded-full transition-all duration-500";
+    } else if (savingsRatio >= 15) {
+        badgeEl.textContent = "Sehat";
+        badgeEl.className = "text-blue-500 font-extrabold";
+        descEl.textContent = "Bagus! Kamu berhasil menjaga sisa dana kas positif bulan ini.";
+        ratioBarEl.className = "bg-blue-500 h-2.5 rounded-full transition-all duration-500";
+    } else {
+        badgeEl.textContent = "Waspada";
+        badgeEl.className = "text-amber-500 font-extrabold";
+        descEl.textContent = "Hati-hati, alokasi sisa kas tipis. Kurangi pengeluaran harian yang tidak perlu.";
+        ratioBarEl.className = "bg-amber-500 h-2.5 rounded-full transition-all duration-500";
+    }
 
-            const ctx1 = document.getElementById('chartIncomeExpense').getContext('2d');
-            if(chartIncExp) chartIncExp.destroy();
-            chartIncExp = new Chart(ctx1, {
-                type: 'bar',
-                data: {
-                    labels: ['Pemasukkan', 'Pengeluaran'],
-                    datasets: [{
-                        label: 'Nominal (Rp)',
-                        data: [incomeTotal, totalExpense],
-                        backgroundColor: ['#10b981', '#ef4444'],
-                        borderRadius: 8
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        x: { ticks: { color: chartTextColor }, grid: { display: false } },
-                        y: { ticks: { color: chartTextColor }, grid: { color: chartGridColor } }
-                    }
-                }
-            });
+    const chartTextColor = getChartTextColor();
+    const chartGridColor = getChartGridColor();
 
-            const ctx2 = document.getElementById('chartProporsi').getContext('2d');
-            if(chartProp) chartProp.destroy();
-
-            const labels = Object.keys(expCategories);
-            const dataVals = Object.values(expCategories);
-            const colors = ['#f43f5e', '#3b82f6', '#8b5cf6', '#f59e0b', '#10b981', '#06b6d4', '#ec4899', '#6366f1'];
-
-            chartProp = new Chart(ctx2, {
-                type: 'doughnut',
-                data: {
-                    labels: labels.length ? labels : ['Belum Ada Pengeluaran'],
-                    datasets: [{
-                        data: dataVals.length ? dataVals : [1],
-                        backgroundColor: dataVals.length ? colors.slice(0, labels.length) : ['#9ca3af']
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, color: chartTextColor } } }
-                }
-            });
-
-            const breakdownContainer = document.getElementById('laporanKategoriBreakdown');
-            breakdownContainer.innerHTML = '';
-            
-            if(Object.keys(expCategories).length === 0) {
-                breakdownContainer.innerHTML = '<p class="text-gray-400 col-span-3 text-center py-4">Belum ada rincian pengeluaran di bulan ini.</p>';
-            } else {
-                Object.entries(expCategories).forEach(([kat, total]) => {
-                    const pct = totalExpense > 0 ? ((total / totalExpense) * 100).toFixed(1) : 0;
-                    breakdownContainer.innerHTML += `
-                        <div class="card-custom p-3 rounded-xl flex items-center justify-between border border-gray-800">
-                            <div>
-                                <span class="font-bold text-gray-200 block">${kat}</span>
-                                <span class="text-[10px] text-gray-400">${pct}% dari total pengeluaran</span>
-                            </div>
-                            <span class="font-mono font-bold text-rose-500">${formatRp(total)}</span>
-                        </div>
-                    `;
-                });
+    // 🟢 5. UPDATE BAR CHART (TOTAL DANA TERSEDIA VS PENGELUARAN)
+    const ctx1 = document.getElementById('chartIncomeExpense').getContext('2d');
+    if(chartIncExp) chartIncExp.destroy();
+    chartIncExp = new Chart(ctx1, {
+        type: 'bar',
+        data: {
+            labels: ['Total Dana Kas', 'Pengeluaran'],
+            datasets: [{
+                label: 'Nominal (Rp)',
+                data: [totalDanaTersedia, totalExpense], // Menampilkan modal kas nyata vs pengeluaran
+                backgroundColor: ['#10b981', '#ef4444'],
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { ticks: { color: chartTextColor }, grid: { display: false } },
+                y: { ticks: { color: chartTextColor }, grid: { color: chartGridColor } }
             }
         }
+    });
+
+    const ctx2 = document.getElementById('chartProporsi').getContext('2d');
+    if(chartProp) chartProp.destroy();
+
+    const labels = Object.keys(expCategories);
+    const dataVals = Object.values(expCategories);
+    const colors = ['#f43f5e', '#3b82f6', '#8b5cf6', '#f59e0b', '#10b981', '#06b6d4', '#ec4899', '#6366f1'];
+
+    chartProp = new Chart(ctx2, {
+        type: 'doughnut',
+        data: {
+            labels: labels.length ? labels : ['Belum Ada Pengeluaran'],
+            datasets: [{
+                data: dataVals.length ? dataVals : [1],
+                backgroundColor: dataVals.length ? colors.slice(0, labels.length) : ['#9ca3af']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, color: chartTextColor } } }
+        }
+    });
+
+    const breakdownContainer = document.getElementById('laporanKategoriBreakdown');
+    breakdownContainer.innerHTML = '';
+    
+    if(Object.keys(expCategories).length === 0) {
+        breakdownContainer.innerHTML = '<p class="text-gray-400 col-span-3 text-center py-4">Belum ada rincian pengeluaran di bulan ini.</p>';
+    } else {
+        Object.entries(expCategories).forEach(([kat, total]) => {
+            const pct = totalExpense > 0 ? ((total / totalExpense) * 100).toFixed(1) : 0;
+            breakdownContainer.innerHTML += `
+                <div class="card-custom p-3 rounded-xl flex items-center justify-between border border-gray-800">
+                    <div>
+                        <span class="font-bold text-gray-200 block">${kat}</span>
+                        <span class="text-[10px] text-gray-400">${pct}% dari total pengeluaran</span>
+                    </div>
+                    <span class="font-mono font-bold text-rose-500">${formatRp(total)}</span>
+                </div>
+            `;
+        });
+    }
+}
 
         function populateBudgetKategoriSelect() {
             const select = document.getElementById('budgetKategori');
