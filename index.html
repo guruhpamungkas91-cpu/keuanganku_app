@@ -1162,6 +1162,9 @@ let recurrings = JSON.parse(localStorage.getItem('keuanganku_recurrings')) || [
         filtered = filtered.filter(t => (t.dompet || t.wallet) === filterDom);
     }
 
+    // 🟢 URUTKAN TANGGAL: Tanggal terbaru di paling atas (Descending)
+    filtered.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+
     // Update Badge & Subtitle
     const badgeCount = document.getElementById('badgeTxCount');
     if (badgeCount) badgeCount.textContent = filtered.length;
