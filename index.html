@@ -2043,148 +2043,179 @@ function renderBudgets() {
         }
 
         function renderRecurring() {
-            const container = document.getElementById('recurringList');
-            container.innerHTML = '';
+    const container = document.getElementById('recurringListContainer'); // atau ID container tagihan lu
+    if (!container) return;
+    
+    container.innerHTML = '';
 
-            if (recurrings.length === 0) {
-                container.innerHTML = '<p class="text-gray-400 text-xs text-center py-6">Belum ada tagihan rutin.</p>';
-                return;
-            }
+    // Pastikan recurring / tagihan adalah Array
+    if (!Array.isArray(recurrings)) recurrings = [];
 
-            recurrings.forEach(r => {
-                const badgeClass = getDompetBadgeClass(r.dompet);
-                const targetPrefix = document.getElementById('currentPeriod').value;
-                const isPaid = transactions.some(t => t.judul.includes(r.name) && t.tanggal.startsWith(targetPrefix));
+    recurrings.forEach(r => {
+        // Logika isPaid & badgeClass lu ada di sini...
+        const isPaid = false; // (Sesuaikan dengan variabel isPaid lu)
+        const badgeClass = 'bg-gray-800 text-gray-300'; // (Sesuaikan dengan variabel lu)
 
-                container.innerHTML += `
-                    <div class="card-custom p-4 rounded-xl border border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-3 transition hover:border-gray-700">
-                        <div class="w-full sm:w-auto">
-                            <h4 class="font-bold text-gray-200">${r.name}</h4>
-                            <div class="flex items-center gap-2 mt-1">
-                                <span class="text-xs text-gray-400">Tgl ${r.day} tiap bulan</span>
-                                <span class="text-[10px] px-2 py-0.5 rounded ${badgeClass}">${r.dompet}</span>
-                            </div>
-                        </div>
-                        <div class="w-full sm:w-auto flex items-center justify-between sm:justify-end gap-4">
-                            <span class="font-bold text-rose-500 font-mono">${formatRp(r.amount)}</span>
-                            <div class="flex items-center gap-2 no-print">
-                                ${isPaid 
-                                    ? '<span class="text-[10px] bg-emerald-500/20 text-emerald-500 px-2 py-1 rounded font-bold border border-emerald-500/30"><i class="fa-solid fa-check"></i> Lunas Bulan Ini</span>'
-                                    : `<button onclick="payRecurring('${r.id}')" class="bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg shadow transition"><i class="fa-solid fa-wallet"></i> Bayar Sekarang</button>`
-                                }
-                                <button onclick="editRecurring('${r.id}')" class="text-blue-500 hover:text-blue-400 p-1"><i class="fa-solid fa-pen-to-square"></i></button>
-                                <button onclick="deleteRecurring('${r.id}')" class="text-rose-500 hover:text-rose-400 p-1"><i class="fa-solid fa-trash"></i></button>
-                            </div>
-                        </div>
+        container.innerHTML += `
+            <div class="card-custom p-4 rounded-xl border border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-3 transition hover:border-gray-700">
+                <div class="w-full sm:w-auto">
+                    <h4 class="font-bold text-gray-200">${r.name}</h4>
+                    <div class="flex items-center gap-2 mt-1">
+                        <span class="text-xs text-gray-400">Tgl ${r.day} tiap bulan</span>
+                        <span class="text-[10px] px-2 py-0.5 rounded ${badgeClass}">${r.dompet}</span>
                     </div>
-                `;
-            });
-        }
+                </div>
+                <div class="w-full sm:w-auto flex items-center justify-between sm:justify-end gap-4">
+                    <span class="font-bold text-rose-500 font-mono">${formatRp(r.amount)}</span>
+                    <div class="flex items-center gap-2 no-print">
+                        ${isPaid 
+                            ? '<span class="text-[10px] bg-emerald-500/20 text-emerald-500 px-2 py-1 rounded font-bold border border-emerald-500/30"><i class="fa-solid fa-check"></i> Lunas Bulan Ini</span>'
+                            : `<button onclick="payRecurring('${r.id}')" class="bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg shadow transition"><i class="fa-solid fa-wallet"></i> Bayar Sekarang</button>`
+                        }
+                        <button onclick="editRecurring('${r.id}')" class="text-blue-500 hover:text-blue-400 p-1"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button onclick="deleteRecurring('${r.id}')" class="text-rose-500 hover:text-rose-400 p-1"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }); // 🟢 Menutup recurrings.forEach
 
+} // 🟢 WAJIB ADA: Menutup function renderRecurring()
+        
+        
         function renderAnnualSummary() {
-            const year = document.getElementById('rekapYearSelect').value;
-            const annualTxs = transactions.filter(t => t.tanggal.startsWith(year));
+    const yearSelect = document.getElementById('rekapYearSelect');
+    if (!yearSelect) return;
+    const year = yearSelect.value;
 
-            let totIncome = 0;
-            let totTetap = 0;
-            let totHarian = 0;
-            let totLain = 0;
+    if (!Array.isArray(transactions)) transactions = [];
+    const annualTxs = transactions.filter(t => t && t.tanggal && String(t.tanggal).startsWith(year));
 
-            const monthlyData = Array.from({length: 12}, () => ({ income: 0, tetap: 0, harian: 0, lain: 0, totalExp: 0, net: 0 }));
+    let totIncome = 0;
+    let totTetap = 0;
+    let totHarian = 0;
+    let totLain = 0;
 
-            annualTxs.forEach(t => {
-                const monthIdx = parseInt(t.tanggal.split('-')[1]) - 1; // 0-11
-                if (monthIdx >= 0 && monthIdx <= 11) {
-                    if (t.jenis === 'Pemasukkan') {
-                        totIncome += t.nominal;
-                        monthlyData[monthIdx].income += t.nominal;
-                    } else {
-                        monthlyData[monthIdx].totalExp += t.nominal;
-                        if (t.jenis === 'Pengeluaran Tetap') {
-                            totTetap += t.nominal;
-                            monthlyData[monthIdx].tetap += t.nominal;
-                        } else if (t.jenis === 'Pengeluaran Harian') {
-                            totHarian += t.nominal;
-                            monthlyData[monthIdx].harian += t.nominal;
-                        } else {
-                            totLain += t.nominal;
-                            monthlyData[monthIdx].lain += t.nominal;
-                        }
-                    }
+    const monthlyData = Array.from({ length: 12 }, () => ({ 
+        income: 0, tetap: 0, harian: 0, lain: 0, totalExp: 0, net: 0 
+    }));
+
+    annualTxs.forEach(t => {
+        if (!t.tanggal) return;
+        const monthIdx = parseInt(t.tanggal.split('-')[1], 10) - 1;
+        const nominal = parseFloat(t.nominal) || 0;
+
+        if (monthIdx >= 0 && monthIdx <= 11) {
+            if (t.jenis === 'Pemasukkan') {
+                totIncome += nominal;
+                monthlyData[monthIdx].income += nominal;
+            } else {
+                monthlyData[monthIdx].totalExp += nominal;
+                if (t.jenis === 'Pengeluaran Tetap') {
+                    totTetap += nominal;
+                    monthlyData[monthIdx].tetap += nominal;
+                } else if (t.jenis === 'Pengeluaran Harian') {
+                    totHarian += nominal;
+                    monthlyData[monthIdx].harian += nominal;
+                } else {
+                    totLain += nominal;
+                    monthlyData[monthIdx].lain += nominal;
                 }
-            });
-
-            document.getElementById('annualIncome').textContent = formatRp(totIncome);
-            document.getElementById('annualExpenseTetap').textContent = formatRp(totTetap);
-            document.getElementById('annualExpenseHarian').textContent = formatRp(totHarian);
-            document.getElementById('annualExpenseLain').textContent = formatRp(totLain);
-            document.getElementById('annualNetSavings').textContent = formatRp(totIncome - (totTetap + totHarian + totLain));
-
-            const tbody = document.getElementById('annualTableBody');
-            tbody.innerHTML = '';
-            const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-
-            monthNames.forEach((month, idx) => {
-                const data = monthlyData[idx];
-                data.net = data.income - data.totalExp;
-
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-white/5 transition border-b border-gray-800/40";
-                tr.innerHTML = `
-                    <td class="py-2.5 px-3 text-gray-200">${month}</td>
-                    <td class="py-2.5 px-3 text-emerald-500 font-mono">${formatRp(data.income)}</td>
-                    <td class="py-2.5 px-3 text-blue-500 font-mono">${formatRp(data.tetap)}</td>
-                    <td class="py-2.5 px-3 text-amber-500 font-mono">${formatRp(data.harian)}</td>
-                    <td class="py-2.5 px-3 text-purple-500 font-mono">${formatRp(data.lain)}</td>
-                    <td class="py-2.5 px-3 text-rose-500 font-bold font-mono">${formatRp(data.totalExp)}</td>
-                    <td class="py-2.5 px-3 text-right font-bold font-mono ${data.net >= 0 ? 'text-emerald-500' : 'text-rose-500'}">${formatRp(data.net)}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-            const ctx = document.getElementById('annualChart').getContext('2d');
-            if(chartAnnual) chartAnnual.destroy();
-
-            const chartTextColor = getChartTextColor();
-            const chartGridColor = getChartGridColor();
-
-            chartAnnual = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: monthNames,
-                    datasets: [
-                        {
-                            label: 'Pemasukkan',
-                            data: monthlyData.map(d => d.income),
-                            borderColor: '#10b981',
-                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                            borderWidth: 2,
-                            tension: 0.3,
-                            fill: true
-                        },
-                        {
-                            label: 'Total Pengeluaran',
-                            data: monthlyData.map(d => d.totalExp),
-                            borderColor: '#f43f5e',
-                            backgroundColor: 'rgba(244, 63, 94, 0.1)',
-                            borderWidth: 2,
-                            tension: 0.3,
-                            fill: true
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: { mode: 'index', intersect: false },
-                    plugins: { legend: { labels: { color: chartTextColor } } },
-                    scales: {
-                        x: { ticks: { color: chartTextColor }, grid: { display: false } },
-                        y: { ticks: { color: chartTextColor }, grid: { color: chartGridColor } }
-                    }
-                }
-            });
+            }
         }
+    });
+
+    // Update Text Content Rekap
+    const elIncome = document.getElementById('annualIncome');
+    if (elIncome) elIncome.textContent = formatRp(totIncome);
+
+    const elTetap = document.getElementById('annualExpenseTetap');
+    if (elTetap) elTetap.textContent = formatRp(totTetap);
+
+    const elHarian = document.getElementById('annualExpenseHarian');
+    if (elHarian) elHarian.textContent = formatRp(totHarian);
+
+    const elLain = document.getElementById('annualExpenseLain');
+    if (elLain) elLain.textContent = formatRp(totLain);
+
+    const elNet = document.getElementById('annualNetSavings');
+    if (elNet) elNet.textContent = formatRp(totIncome - (totTetap + totHarian + totLain));
+
+    // Render Tabel
+    const tbody = document.getElementById('annualTableBody');
+    if (tbody) {
+        tbody.innerHTML = '';
+        const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+
+        monthNames.forEach((month, idx) => {
+            const data = monthlyData[idx];
+            data.net = data.income - data.totalExp;
+
+            const tr = document.createElement('tr');
+            tr.className = "hover:bg-white/5 transition border-b border-gray-800/40";
+            tr.innerHTML = `
+                <td class="py-2.5 px-3 text-gray-200">${month}</td>
+                <td class="py-2.5 px-3 text-emerald-500 font-mono">${formatRp(data.income)}</td>
+                <td class="py-2.5 px-3 text-blue-500 font-mono">${formatRp(data.tetap)}</td>
+                <td class="py-2.5 px-3 text-amber-500 font-mono">${formatRp(data.harian)}</td>
+                <td class="py-2.5 px-3 text-purple-500 font-mono">${formatRp(data.lain)}</td>
+                <td class="py-2.5 px-3 text-rose-500 font-bold font-mono">${formatRp(data.totalExp)}</td>
+                <td class="py-2.5 px-3 text-right font-bold font-mono ${data.net >= 0 ? 'text-emerald-500' : 'text-rose-500'}">${formatRp(data.net)}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // 🟢 Guard Pengaman Chart (Mencegah Crash kalau canvas tidak ada di DOM)
+    const chartCanvas = document.getElementById('annualChart');
+    if (!chartCanvas) return;
+
+    const ctx = chartCanvas.getContext('2d');
+    if (typeof chartAnnual !== 'undefined' && chartAnnual) {
+        chartAnnual.destroy();
+    }
+
+    const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    const chartTextColor = typeof getChartTextColor === 'function' ? getChartTextColor() : '#9ca3af';
+    const chartGridColor = typeof getChartGridColor === 'function' ? getChartGridColor() : 'rgba(255,255,255,0.1)';
+
+    chartAnnual = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: monthNames,
+            datasets: [
+                {
+                    label: 'Pemasukkan',
+                    data: monthlyData.map(d => d.income),
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    fill: true
+                },
+                {
+                    label: 'Total Pengeluaran',
+                    data: monthlyData.map(d => d.totalExp),
+                    borderColor: '#f43f5e',
+                    backgroundColor: 'rgba(244, 63, 94, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    fill: true
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: { legend: { labels: { color: chartTextColor } } },
+            scales: {
+                x: { ticks: { color: chartTextColor }, grid: { display: false } },
+                y: { ticks: { color: chartTextColor }, grid: { color: chartGridColor } }
+            }
+        }
+    });
+}
     </script>
 </body>
 </html>
