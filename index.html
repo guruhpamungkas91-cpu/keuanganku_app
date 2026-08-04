@@ -1422,27 +1422,60 @@ function renderSummary() {
         }
 
         function switchTab(tabKey) {
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('bg-blue-600', 'text-white', 'shadow-lg', 'shadow-blue-600/30');
-                btn.classList.add('card-custom', 'opacity-80');
-            });
-            const activeBtn = document.getElementById(`tab-${tabKey}`);
-            if(activeBtn) {
-                activeBtn.classList.remove('card-custom', 'opacity-80');
-                activeBtn.classList.add('bg-blue-600', 'text-white', 'shadow-lg', 'shadow-blue-600/30');
-            }
+    // 1. Simpan draft inputan jika user mau KELUAR dari tab transaksi
+    const currentTxForm = document.getElementById('txForm');
+    if (currentTxForm) {
+        const draftData = {
+            jenis: document.getElementById('txJenis')?.value || '',
+            judul: document.getElementById('txJudul')?.value || '',
+            nominal: document.getElementById('txNominal')?.value || '',
+            dompet: document.getElementById('txDompet')?.value || '',
+            dompetTujuan: document.getElementById('txDompetTujuan')?.value || '',
+            kategori: document.getElementById('txKategori')?.value || '',
+            tanggal: document.getElementById('txTanggal')?.value || ''
+        };
+        localStorage.setItem('tempTxFormDraft', JSON.stringify(draftData));
+    }
 
-            document.querySelectorAll('.tab-content').forEach(sec => sec.classList.add('hidden'));
-            const activeContent = document.getElementById(`content-${tabKey}`);
-            if(activeContent) activeContent.classList.remove('hidden');
+    // 2. Ubah Style Tombol Tab Active/Inactive
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('bg-blue-600', 'text-white', 'shadow-lg', 'shadow-blue-600/30');
+        btn.classList.add('card-custom', 'opacity-80');
+    });
+    const activeBtn = document.getElementById(`tab-${tabKey}`);
+    if(activeBtn) {
+        activeBtn.classList.remove('card-custom', 'opacity-80');
+        activeBtn.classList.add('bg-blue-600', 'text-white', 'shadow-lg', 'shadow-blue-600/30');
+    }
 
-            if(tabKey === 'laporan') renderLaporanCharts();
-            if(tabKey === 'anggaran') renderBudgets();
-            if(tabKey === 'impian') renderGoals();
-            if(tabKey === 'hutang') renderDebts();
-            if(tabKey === 'tagihan') renderRecurring();
-            if(tabKey === 'rekap') renderAnnualSummary();
+    // 3. Sembunyikan Semua Tab & Tampilkan Tab Aktif
+    document.querySelectorAll('.tab-content').forEach(sec => sec.classList.add('hidden'));
+    const activeContent = document.getElementById(`content-${tabKey}`);
+    if(activeContent) activeContent.classList.remove('hidden');
+
+    // 4. Jika user BALIK KEMBALI ke tab 'transaksi', isi ulang inputannya dari draft!
+    if (tabKey === 'transaksi') {
+        const savedDraft = localStorage.getItem('tempTxFormDraft');
+        if (savedDraft) {
+            const data = JSON.parse(savedDraft);
+            if(data.jenis && document.getElementById('txJenis')) document.getElementById('txJenis').value = data.jenis;
+            if(data.judul && document.getElementById('txJudul')) document.getElementById('txJudul').value = data.judul;
+            if(data.nominal && document.getElementById('txNominal')) document.getElementById('txNominal').value = data.nominal;
+            if(data.dompet && document.getElementById('txDompet')) document.getElementById('txDompet').value = data.dompet;
+            if(data.dompetTujuan && document.getElementById('txDompetTujuan')) document.getElementById('txDompetTujuan').value = data.dompetTujuan;
+            if(data.kategori && document.getElementById('txKategori')) document.getElementById('txKategori').value = data.kategori;
+            if(data.tanggal && document.getElementById('txTanggal')) document.getElementById('txTanggal').value = data.tanggal;
         }
+    }
+
+    // 5. Render Chart/Tabel Tab Lain
+    if(tabKey === 'laporan') renderLaporanCharts();
+    if(tabKey === 'anggaran') renderBudgets();
+    if(tabKey === 'impian') renderGoals();
+    if(tabKey === 'hutang') renderDebts();
+    if(tabKey === 'tagihan') renderRecurring();
+    if(tabKey === 'rekap') renderAnnualSummary();
+}
 
         function updateCategoriesOptions() {
     const jenisEl = document.getElementById('txJenis');
@@ -1624,6 +1657,9 @@ function renderSummary() {
     } else {
         localStorage.setItem('keuanganku_transactions', JSON.stringify(transactions));
     }
+
+    // 🔴 BERSIHKAN DRAFT SEMENTARA SETELAH SUKSES SIMPAN
+    localStorage.removeItem('tempTxFormDraft');
 
     // 4. Reset Form & Render
     resetForm();
