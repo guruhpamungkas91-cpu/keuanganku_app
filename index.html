@@ -271,88 +271,120 @@
         </nav>
 
         <section id="content-transaksi" class="tab-content space-y-6">
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        <!-- KOLOM KIRI: FORM INPUT (4 KOLOM) -->
+        <div class="lg:col-span-4 no-print">
+            <div class="card-custom rounded-2xl p-5 shadow-xl sticky top-20">
                 
-                <div class="lg:col-span-4 no-print">
-                    <div class="card-custom rounded-2xl p-5 shadow-xl sticky top-20">
-                        <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-800/50">
-                            <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-500 flex items-center justify-center">
-                                    <i class="fa-solid fa-plus-circle" id="formIcon"></i>
-                                </div>
-                                <div>
-                                    <h2 class="font-bold text-sm" id="formTitle">Tambah Transaksi Baru</h2>
-                                    <p class="text-[11px] text-gray-400">Input pemasukan & pengeluaran kamu di sini</p>
-                                </div>
-                            </div>
-                            <button id="cancelEditBtn" onclick="resetForm()" class="hidden text-xs text-red-500 hover:underline">
-                                Batal
-                            </button>
+                <!-- Header Form -->
+                <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-800/50">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-500 flex items-center justify-center">
+                            <i class="fa-solid fa-plus-circle" id="formIcon"></i>
+                        </div>
+                        <div>
+                            <h2 class="font-bold text-sm" id="formTitle">Tambah Transaksi Baru</h2>
+                            <p class="text-[11px] text-gray-400">Input pemasukan & pengeluaran kamu di sini</p>
+                        </div>
+                    </div>
+                    <button id="cancelEditBtn" onclick="resetForm()" class="hidden text-xs text-red-500 hover:underline">
+                        Batal
+                    </button>
+                </div>
+
+                <!-- Form Transaksi -->
+                <form id="txForm" onsubmit="saveTransaction(event)" class="space-y-4 text-xs">
+                    <input type="hidden" id="txId">
+
+                    <!-- 1. Jenis Transaksi -->
+                    <div>
+                        <label class="block mb-1.5 font-medium text-gray-300">Jenis Transaksi</label>
+                        <select id="txJenis" onchange="updateCategoriesOptions()" class="w-full input-custom rounded-xl px-3 py-2 font-medium">
+                            <option value="Pemasukkan">Pemasukkan</option>
+                            <option value="Pengeluaran Tetap">Pengeluaran Tetap</option>
+                            <option value="Pengeluaran Harian" selected>Pengeluaran Harian</option>
+                            <option value="Pengeluaran Lainnya">Pengeluaran Lainnya</option>
+                            <option value="Transfer / Top Up">🔄 Transfer / Top Up Antar Dompet</option>
+                        </select>
+                    </div>
+
+                    <!-- 2. Judul Transaksi -->
+                    <div>
+                        <label class="block mb-1.5 font-medium text-gray-300">Judul Transaksi</label>
+                        <input type="text" id="txJudul" required placeholder="Contoh: Beli Token Listrik, Makan Siang" class="w-full input-custom rounded-xl px-3 py-2">
+                    </div>
+
+                    <!-- 3. Nominal -->
+                    <div>
+                        <label class="block mb-1.5 font-medium text-gray-300">Nominal (Rp)</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-2 text-gray-400 font-bold">Rp</span>
+                            <input type="number" id="txNominal" min="1" required placeholder="0" class="w-full input-custom rounded-xl pl-9 pr-3 py-2 font-bold text-sm">
+                        </div>
+                    </div>
+
+                    <!-- 4. Dompet Asal & Tujuan -->
+                    <div class="grid grid-cols-1 gap-3">
+                        <!-- Dompet Asal -->
+                        <div>
+                            <label class="block mb-1.5 font-medium text-gray-300">Sumber Dana / Dompet</label>
+                            <select id="txDompet" class="w-full input-custom rounded-xl px-3 py-2 font-medium">
+                                <option value="Bank BCA">Bank BCA</option>
+                                <option value="BRI">BRI</option>
+                                <option value="MANDIRI">MANDIRI</option>
+                                <option value="BSI">BSI</option>
+                                <option value="Seabank">Seabank</option>
+                                <option value="ShopeePay">ShopeePay</option>
+                                <option value="GoPay">GoPay</option>
+                                <option value="DANA">DANA</option>
+                                <option value="OVO">OVO</option>
+                                <option value="Tunai / Cash" selected>Tunai / Cash</option>
+                            </select>
                         </div>
 
-                        <form id="txForm" onsubmit="saveTransaction(event)" class="space-y-4 text-xs">
-                            <input type="hidden" id="txId">
+                        <!-- Dompet Tujuan -->
+                        <div id="containerDompetTujuan" class="hidden">
+                            <label class="block mb-1.5 font-medium text-gray-300">Ke Dompet (Tujuan)</label>
+                            <select id="txDompetTujuan" class="w-full input-custom rounded-xl px-3 py-2 font-medium">
+                                <option value="Bank BCA">Bank BCA</option>
+                                <option value="BRI">BRI</option>
+                                <option value="MANDIRI">MANDIRI</option>
+                                <option value="BSI">BSI</option>
+                                <option value="Seabank">Seabank</option>
+                                <option value="ShopeePay" selected>ShopeePay</option>
+                                <option value="GoPay">GoPay</option>
+                                <option value="DANA">DANA</option>
+                                <option value="OVO">OVO</option>
+                                <option value="Tunai / Cash">Tunai / Cash</option>
+                            </select>
+                        </div>
+                    </div>
 
-                            <div>
-                                <label class="block mb-1.5 font-medium text-gray-300">Jenis Transaksi</label>
-                                <select id="txJenis" onchange="updateCategoriesOptions()" class="w-full input-custom rounded-xl px-3 py-2 font-medium">
-    <option value="Pemasukkan">Pemasukkan</option>
-    <option value="Pengeluaran Tetap">Pengeluaran Tetap</option>
-    <option value="Pengeluaran Harian" selected>Pengeluaran Harian</option>
-    <option value="Pengeluaran Lainnya">Pengeluaran Lainnya</option>
-    <!-- TAMBAHKAN BARIS DI BAWAH INI -->
-    <option value="Transfer / Top Up">🔄 Transfer / Top Up Antar Dompet</option>
-</select>
+                    <!-- 5. Kategori -->
+                    <div>
+                        <label class="block mb-1.5 font-medium text-gray-300">Kategori</label>
+                        <select id="txKategori" class="w-full input-custom rounded-xl px-3 py-2 font-medium">
+                            <!-- Kategori terisi otomatis via JS -->
+                        </select>
+                    </div>
 
-                            <div>
-    <label class="block mb-1.5 font-medium text-gray-300">Judul Transaksi</label>
-    <input type="text" id="txJudul" required placeholder="Contoh: Beli Token Listrik, Makan Siang" class="w-full input-custom rounded-xl px-3 py-2">
-</div>
+                    <!-- 6. Tanggal Transaksi -->
+                    <div>
+                        <label class="block mb-1.5 font-medium text-gray-300">Tanggal Transaksi</label>
+                        <input type="date" id="txTanggal" required class="w-full input-custom rounded-xl px-3 py-2">
+                    </div>
 
-<div>
-    <label class="block mb-1.5 font-medium text-gray-300">Nominal (Rp)</label>
-    <div class="relative">
-        <span class="absolute left-3 top-2 text-gray-400 font-bold">Rp</span>
-        <input type="number" id="txNominal" min="1" required placeholder="0" class="w-full input-custom rounded-xl pl-9 pr-3 py-2 font-bold text-sm">
-    </div>
-</div>
+                    <!-- Tombol Submit -->
+                    <button type="submit" id="btnSubmitTx" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-xl transition flex items-center justify-center gap-2">
+                        + Simpan Transaksi
+                    </button>
+                </form> <!-- PENUTUP FORM -->
 
-<!-- Grid Dompet Asal & Tujuan -->
-<div class="grid grid-cols-1 gap-3">
-    <!-- Dompet Asal -->
-    <div>
-        <label class="block mb-1.5 font-medium text-gray-300">Sumber Dana / Dompet</label>
-        <select id="txDompet" class="w-full input-custom rounded-xl px-3 py-2 font-medium">
-            <option value="Bank BCA">Bank BCA</option>
-            <option value="BRI">BRI</option>
-            <option value="MANDIRI">MANDIRI</option>
-            <option value="BSI">BSI</option>
-            <option value="Seabank">Seabank</option>
-            <option value="ShopeePay">ShopeePay</option>
-            <option value="GoPay">GoPay</option>
-            <option value="DANA">DANA</option>
-            <option value="OVO">OVO</option>
-            <option value="Tunai / Cash" selected>Tunai / Cash</option>
-        </select>
-    </div>
+            </div>
+        </div> <!-- PENUTUP KOLOM KIRI (lg:col-span-4) -->
 
-    <!-- Dompet Tujuan (Awalnya tersembunyi / hidden) -->
-    <div id="containerDompetTujuan" class="hidden">
-        <label class="block mb-1.5 font-medium text-gray-300">Ke Dompet (Tujuan)</label>
-        <select id="txDompetTujuan" class="w-full input-custom rounded-xl px-3 py-2 font-medium">
-            <option value="Bank BCA">Bank BCA</option>
-            <option value="BRI">BRI</option>
-            <option value="MANDIRI">MANDIRI</option>
-            <option value="BSI">BSI</option>
-            <option value="Seabank">Seabank</option>
-            <option value="ShopeePay" selected>ShopeePay</option>
-            <option value="GoPay">GoPay</option>
-            <option value="DANA">DANA</option>
-            <option value="OVO">OVO</option>
-            <option value="Tunai / Cash">Tunai / Cash</option>
-        </select>
-    </div>
-</div>
+        <!-- KOLOM KANAN DAFTAR TRANSAKSI KAMU TINGGAL DI TAROH DI BAWAH SINI (lg:col-span-8) -->
 
                             <div>
                                 <label class="block mb-1.5 font-medium text-gray-300">Kategori</label>
