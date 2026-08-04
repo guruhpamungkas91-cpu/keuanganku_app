@@ -1453,18 +1453,35 @@ function renderSummary() {
     const activeContent = document.getElementById(`content-${tabKey}`);
     if(activeContent) activeContent.classList.remove('hidden');
 
-    // 4. Jika user BALIK KEMBALI ke tab 'transaksi', isi ulang inputannya dari draft!
+    // 4. Jika user BALIK KEMBALI ke tab 'transaksi'
     if (tabKey === 'transaksi') {
+        // 🔴 PENTING: Panggil pemicu opsi kategori & dompet tujuan dulu!
+        if (typeof updateCategoriesOptions === 'function') {
+            updateCategoriesOptions(); 
+        }
+
         const savedDraft = localStorage.getItem('tempTxFormDraft');
         if (savedDraft) {
             const data = JSON.parse(savedDraft);
-            if(data.jenis && document.getElementById('txJenis')) document.getElementById('txJenis').value = data.jenis;
+            
+            if(data.jenis && document.getElementById('txJenis')) {
+                document.getElementById('txJenis').value = data.jenis;
+                // Jalankan pemicu ubah jenis biar kategori menyesuaikan
+                if (typeof updateCategoriesOptions === 'function') updateCategoriesOptions();
+            }
+            
             if(data.judul && document.getElementById('txJudul')) document.getElementById('txJudul').value = data.judul;
             if(data.nominal && document.getElementById('txNominal')) document.getElementById('txNominal').value = data.nominal;
             if(data.dompet && document.getElementById('txDompet')) document.getElementById('txDompet').value = data.dompet;
             if(data.dompetTujuan && document.getElementById('txDompetTujuan')) document.getElementById('txDompetTujuan').value = data.dompetTujuan;
-            if(data.kategori && document.getElementById('txKategori')) document.getElementById('txKategori').value = data.kategori;
             if(data.tanggal && document.getElementById('txTanggal')) document.getElementById('txTanggal').value = data.tanggal;
+            
+            // Isi kategori SETELAH option-nya ter-render
+            setTimeout(() => {
+                if(data.kategori && document.getElementById('txKategori')) {
+                    document.getElementById('txKategori').value = data.kategori;
+                }
+            }, 50);
         }
     }
 
