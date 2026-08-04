@@ -387,7 +387,10 @@
                                 </table>
                             </div>
                         </div>
-
+                        <div class="bg-gray-800/60 p-4 rounded-xl border border-gray-700/50">
+                        <span class="text-xs text-gray-400 font-medium">Saldo Awal (Sisa Bulan Lalu)</span>
+                        <div id="summarySaldoAwal" class="text-lg font-bold text-sky-400 font-mono mt-1">Rp 0</div>
+                            </div>
                         <div class="mt-6 pt-4 border-t border-gray-800/80 grid grid-cols-2 md:grid-cols-4 gap-3">
                             <div class="card-custom bg-opacity-40 p-3 rounded-xl border border-gray-800">
                                 <span class="text-[10px] text-gray-400 block mb-0.5">Total Income</span>
@@ -1112,7 +1115,89 @@ let recurrings = JSON.parse(localStorage.getItem('keuanganku_recurrings')) || [
             saveData();
             renderAll();
         }
+// ==========================================
+// 1. FUNGSI HITUNG SALDO AWAL (KUMULATIF)
+// ==========================================
+function getSaldoAwalBulan(period) {
+    if (!Array.isArray(transactions) || !period) return 0;
 
+    // Ambil transaksi sebelum bulan aktif (misal < '2026-08')
+    const prevTxs = transactions.filter(t => {
+        if (!t || !t.tanggal) return false;
+        const txPeriod = String(t.tanggal).substring(0, 7);
+        return txPeriod < period;
+    });
+
+    // Hitung total pemasukkan & pengeluaran masa lalu
+    const totalIncomePrev = prevTxs
+        .filter(t => t.jenis === 'Pemasukkan')
+        .reduce((sum, t) => sum + (parseFloat(t.nominal) || 0), 0);
+
+    const totalExpensePrev = prevTxs
+        .filter(t => t.jenis !== 'Pemasukkan')
+        .reduce((sum, t) => sum + (parseFloat(t.nominal) || 0), 0);
+
+    // Saldo Kumulatif yang dibawa ke bulan ini
+    return totalIncomePrev - totalExpensePrev;
+}
+
+// ==========================================
+// 2. FUNGSI UTAMA: RENDER SUMMARY LAPORAN
+// ==========================================
+function renderSummary() {
+    // A. Ambil Saldo Awal dari Bulan Lalu
+    const saldoAwal = getSaldoAwalBulan(selectedPeriod);
+
+    // B. Ambil Transaksi Bulan Ini
+    if (!Array.isArray(transactions)) transactions = [];
+    const currentTxs = transactions.filter(t => t && t.tanggal && String(t.tanggal).startsWith(selectedPeriod || ''));
+
+    let incomeBulanIni = 0;
+    let expenseBulanIni = 0;
+
+    currentTxs.forEach(t => {
+        const nominal = parseFloat(t.nominal) || 0;
+        if (t.jenis === 'Pemasukkan') {
+            incomeBulanIni += nominal;
+        } else {
+            expenseBulanIni += nominal;
+        }
+    });
+
+    // C. Hitung Kas
+    const totalDanaTersedia = saldoAwal + incomeBulanIni;
+    const sisaKasSekarang = totalDanaTersedia - expenseBulanIni;
+
+    // D. Safe Update Helper ke DOM (Biar gak error kalau ID gak ditemukan)
+    const setElementText = (id, text) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = text;
+    };
+
+    const formatFunc = typeof formatRp === 'function' ? formatRp : (val) => 'Rp ' + Number(val).toLocaleString('id-ID');
+
+    // E. Render Ringkasan Angka
+    setElementText('summarySaldoAwal', formatFunc(saldoAwal));
+    setElementText('summaryIncome', formatFunc(incomeBulanIni));
+    setElementText('summaryExpense', formatFunc(expenseBulanIni));
+    setElementText('summaryDanaTersedia', formatFunc(totalDanaTersedia));
+
+    // Render Net/Sisa Kas Akhir (dengan warna fleksibel)
+    const elNet = document.getElementById('summaryNetSaldo') || document.getElementById('summarySisaKas');
+    if (elNet) {
+        elNet.textContent = formatFunc(sisaKasSekarang);
+        if (sisaKasSekarang >= 0) {
+            elNet.className = "text-emerald-400 font-bold font-mono text-xl";
+        } else {
+            elNet.className = "text-rose-500 font-bold font-mono text-xl";
+        }
+    }
+
+    // F. Optional: Render Chart Ringkasan (Bila Ada)
+    if (typeof renderSummaryChart === 'function') {
+        renderSummaryChart(incomeBulanIni, expenseBulanIni, saldoAwal);
+    }
+}
         function renderAll() {
     if (typeof renderTransactions === 'function') renderTransactions();
     if (typeof renderBudgets === 'function') renderBudgets();
