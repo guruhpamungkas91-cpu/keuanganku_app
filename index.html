@@ -296,12 +296,13 @@
                             <div>
                                 <label class="block mb-1.5 font-medium text-gray-300">Jenis Transaksi</label>
                                 <select id="txJenis" onchange="updateCategoriesOptions()" class="w-full input-custom rounded-xl px-3 py-2 font-medium">
-                                    <option value="Pemasukkan">Pemasukkan</option>
-                                    <option value="Pengeluaran Tetap">Pengeluaran Tetap</option>
-                                    <option value="Pengeluaran Harian" selected>Pengeluaran Harian</option>
-                                    <option value="Pengeluaran Lainnya">Pengeluaran Lainnya</option>
-                                </select>
-                            </div>
+    <option value="Pemasukkan">Pemasukkan</option>
+    <option value="Pengeluaran Tetap">Pengeluaran Tetap</option>
+    <option value="Pengeluaran Harian" selected>Pengeluaran Harian</option>
+    <option value="Pengeluaran Lainnya">Pengeluaran Lainnya</option>
+    <!-- TAMBAHKAN BARIS DI BAWAH INI -->
+    <option value="Transfer / Top Up">🔄 Transfer / Top Up Antar Dompet</option>
+</select>
 
                             <div>
                                 <label class="block mb-1.5 font-medium text-gray-300">Judul Transaksi</label>
@@ -317,19 +318,41 @@
                             </div>
 
                             <div>
-                                <label class="block mb-1.5 font-medium text-gray-300">Sumber Dana / Dompet</label>
-                                <select id="txDompet" class="w-full input-custom rounded-xl px-3 py-2 font-medium">
-                                    <option value="Bank BCA">Bank BCA</option>
-                                    <option value="BRI">BRI</option>
-                                    <option value="MANDIRI">MANDIRI</option>
-                                    <option value="BSI">BSI</option>
-                                    <option value="Seabank">Seabank</option>
-                                    <option value="ShopeePay">ShopeePay</option>
-                                    <option value="GoPay">GoPay</option>
-                                    <option value="DANA">DANA</option>
-                                    <option value="OVO">OVO</option>
-                                    <option value="Tunai / Cash" selected>Tunai / Cash</option>
-                                </select>
+                                <!-- Grid Dompet asal & Tujuan -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+    <!-- Dompet Asal -->
+    <div>
+        <label class="block mb-1.5 font-medium text-gray-300">Sumber Dana / Dompet</label>
+        <select id="txDompet" class="w-full input-custom rounded-xl px-3 py-2 font-medium">
+            <option value="Bank BCA">Bank BCA</option>
+            <option value="BRI">BRI</option>
+            <option value="MANDIRI">MANDIRI</option>
+            <option value="BSI">BSI</option>
+            <option value="Seabank">Seabank</option>
+            <option value="ShopeePay">ShopeePay</option>
+            <option value="GoPay">GoPay</option>
+            <option value="DANA">DANA</option>
+            <option value="OVO">OVO</option>
+            <option value="Tunai / Cash" selected>Tunai / Cash</option>
+        </select>
+    </div>
+
+    <!-- Dompet Tujuan (Awalnya tersembunyi / hidden) -->
+    <div id="containerDompetTujuan" class="hidden">
+        <label class="block mb-1.5 font-medium text-gray-300">Ke Dompet (Tujuan)</label>
+        <select id="txDompetTujuan" class="w-full input-custom rounded-xl px-3 py-2 font-medium">
+            <option value="Bank BCA">Bank BCA</option>
+            <option value="BRI">BRI</option>
+            <option value="MANDIRI">MANDIRI</option>
+            <option value="BSI">BSI</option>
+            <option value="Seabank">Seabank</option>
+            <option value="ShopeePay" selected>ShopeePay</option>
+            <option value="GoPay">GoPay</option>
+            <option value="DANA">DANA</option>
+            <option value="OVO">OVO</option>
+            <option value="Tunai / Cash">Tunai / Cash</option>
+        </select>
+    </div>
                             </div>
 
                             <div>
@@ -1331,18 +1354,39 @@ function renderSummary() {
         }
 
         function updateCategoriesOptions() {
-            const jenis = document.getElementById('txJenis').value;
-            const katSelect = document.getElementById('txKategori');
-            katSelect.innerHTML = '';
-            
-            const list = CATEGORIES[jenis] || ["Lainnya"];
-            list.forEach(k => {
-                const opt = document.createElement('option');
-                opt.value = k;
-                opt.textContent = k;
-                katSelect.appendChild(opt);
-            });
+    const jenisEl = document.getElementById('txJenis');
+    if (!jenisEl) return;
+    
+    const jenis = jenisEl.value;
+    const katSelect = document.getElementById('txKategori');
+    const containerTujuan = document.getElementById('containerDompetTujuan');
+
+    // 1. Toggle Tampilan Input Dompet Tujuan
+    if (containerTujuan) {
+        if (jenis === "Transfer / Top Up") {
+            containerTujuan.classList.remove('hidden'); // Munculkan dompet tujuan
+        } else {
+            containerTujuan.classList.add('hidden');    // Sembunyikan kalau transaksi biasa
         }
+    }
+
+    // 2. Populate Opsi Kategori
+    if (katSelect) {
+        katSelect.innerHTML = '';
+        
+        // Jika Transfer / Top Up, otomatis pakai kategori "Transfer / Top Up"
+        const list = (jenis === "Transfer / Top Up") 
+            ? ["Transfer / Top Up"] 
+            : (CATEGORIES[jenis] || ["Lainnya"]);
+
+        list.forEach(k => {
+            const opt = document.createElement('option');
+            opt.value = k;
+            opt.textContent = k;
+            katSelect.appendChild(opt);
+        });
+    }
+}
 
         function populateFilterOptions() {
             const fKat = document.getElementById('filterKategori');
@@ -1384,53 +1428,103 @@ function renderSummary() {
     const idInput = document.getElementById('txId') || document.getElementById('transactionId');
     const id = idInput ? idInput.value : '';
 
-    // 2. Ambil SEMUA Nilai Input (Termasuk Judul & Dompet!)
+    // 2. Ambil SEMUA Nilai Input
     const judul = document.getElementById('txJudul')?.value || document.getElementById('judul')?.value || '';
     const dompet = document.getElementById('txDompet')?.value || document.getElementById('dompet')?.value || 'Tunai / Cash';
+    const dompetTujuan = document.getElementById('txDompetTujuan')?.value || document.getElementById('dompetTujuan')?.value || '';
     const tanggal = document.getElementById('txTanggal')?.value || document.getElementById('tanggal')?.value;
     const kategori = document.getElementById('txKategori')?.value || document.getElementById('kategori')?.value;
     const nominal = parseFloat(document.getElementById('txNominal')?.value || document.getElementById('nominal')?.value || 0);
     const jenis = document.getElementById('txJenis')?.value || document.getElementById('jenis')?.value;
     const catatan = document.getElementById('txCatatan')?.value || document.getElementById('catatan')?.value || '';
 
-    if (!tanggal || !kategori || nominal <= 0) {
-        if (typeof showToast === 'function') showToast('Harap isi semua bidang dengan benar!');
+    if (!tanggal || nominal <= 0) {
+        if (typeof showToast === 'function') showToast('Harap isi tanggal dan nominal dengan benar!');
         return;
     }
 
     if (!Array.isArray(transactions)) transactions = [];
 
-    if (id) {
-        // 🔴 MODE EDIT: Cari index & update SEMUA properti tanpa ada yang kehapus
-        const idx = transactions.findIndex(t => String(t.id) === String(id));
-        if (idx !== -1) {
-            transactions[idx] = { 
-                ...transactions[idx], // Pertahankan field pendukung lain jika ada
-                id, 
-                judul: judul || transactions[idx].judul || 'Tanpa Judul', 
-                dompet, 
-                tanggal, 
-                kategori, 
-                nominal, 
-                jenis, 
-                catatan 
-            };
-            if (typeof showToast === 'function') showToast('Transaksi berhasil diperbarui');
+    // 🔴 KHUSUS MODE TRANSFER / TOP UP
+    if (jenis === "Transfer / Top Up") {
+        if (!dompetTujuan || dompet === dompetTujuan) {
+            if (typeof showToast === 'function') showToast('Pilih dompet tujuan yang berbeda!');
+            return;
         }
-    } else {
-        // 🟢 MODE TAMBAH BARU
-        const newTx = {
-            id: 'tx_' + Date.now(),
-            judul: judul || 'Tanpa Judul',
-            dompet,
+
+        if (id) {
+            // Jika mode edit transfer, hapus sepasang transaksi transfer lama berbasis pairing ID
+            transactions = transactions.filter(t => t.transferPairId !== id && t.id !== id);
+        }
+
+        const pairId = 'trf_' + Date.now();
+
+        // 1. Catatan Pengeluaran Transfer dari Dompet Asal
+        const txOut = {
+            id: pairId + '_out',
+            transferPairId: pairId,
+            judul: judul || `Transfer ke ${dompetTujuan}`,
+            dompet: dompet,
             tanggal,
-            kategori,
+            kategori: 'Transfer / Top Up',
             nominal,
-            jenis,
+            jenis: 'Transfer Out',
             catatan
         };
-        transactions.push(newTx);
-        if (typeof showToast === 'function') showToast('Transaksi berhasil ditambahkan');
+
+        // 2. Catatan Pemasukan Transfer ke Dompet Tujuan
+        const txIn = {
+            id: pairId + '_in',
+            transferPairId: pairId,
+            judul: judul || `Top Up dari ${dompet}`,
+            dompet: dompetTujuan,
+            tanggal,
+            kategori: 'Transfer / Top Up',
+            nominal,
+            jenis: 'Transfer In',
+            catatan
+        };
+
+        transactions.push(txOut, txIn);
+        if (typeof showToast === 'function') showToast(`Berhasil transfer ${formatRp(nominal)} dari ${dompet} ke ${dompetTujuan}`);
+
+    } else {
+        // 🟢 MODE TRANSAKSI BIASA (Pemasukkan / Pengeluaran Harian / Tetap)
+        if (!kategori) {
+            if (typeof showToast === 'function') showToast('Harap pilih kategori!');
+            return;
+        }
+
+        if (id) {
+            const idx = transactions.findIndex(t => String(t.id) === String(id));
+            if (idx !== -1) {
+                transactions[idx] = { 
+                    ...transactions[idx],
+                    id, 
+                    judul: judul || transactions[idx].judul || 'Tanpa Judul', 
+                    dompet, 
+                    tanggal, 
+                    kategori, 
+                    nominal, 
+                    jenis, 
+                    catatan 
+                };
+                if (typeof showToast === 'function') showToast('Transaksi berhasil diperbarui');
+            }
+        } else {
+            const newTx = {
+                id: 'tx_' + Date.now(),
+                judul: judul || 'Tanpa Judul',
+                dompet,
+                tanggal,
+                kategori,
+                nominal,
+                jenis,
+                catatan
+            };
+            transactions.push(newTx);
+            if (typeof showToast === 'function') showToast('Transaksi berhasil ditambahkan');
+        }
     }
 
     // 3. Simpan ke LocalStorage
@@ -1440,10 +1534,9 @@ function renderSummary() {
         localStorage.setItem('keuanganku_transactions', JSON.stringify(transactions));
     }
 
-    // 4. Reset Form
+    // 4. Reset Form & Render
     resetForm();
 
-    // 5. Render Ulang
     if (typeof renderAll === 'function') {
         renderAll();
     } else {
@@ -1455,11 +1548,9 @@ function editTransaction(id) {
     const t = transactions.find(x => String(x.id) === String(id));
     if (!t) return;
 
-    // Set Hidden ID
     const idInput = document.getElementById('txId') || document.getElementById('transactionId');
-    if (idInput) idInput.value = t.id;
+    if (idInput) idInput.value = t.transferPairId || t.id;
 
-    // Isikan SEMUA field ke Form
     const setVal = (ids, val) => {
         ids.forEach(i => {
             const el = document.getElementById(i);
@@ -1470,16 +1561,14 @@ function editTransaction(id) {
     setVal(['txJudul', 'judul'], t.judul || t.title || '');
     setVal(['txDompet', 'dompet'], t.dompet || t.wallet || 'Tunai / Cash');
     setVal(['txTanggal', 'tanggal'], t.tanggal || '');
-    setVal(['txJenis', 'jenis'], t.jenis || 'Pengeluaran Harian');
+    setVal(['txJenis', 'jenis'], t.jenis.startsWith('Transfer') ? 'Transfer / Top Up' : (t.jenis || 'Pengeluaran Harian'));
     
-    // Update opsi kategori dulu sesuai jenis transaksi
     if (typeof updateCategoriesOptions === 'function') updateCategoriesOptions();
 
     setVal(['txKategori', 'kategori'], t.kategori || '');
     setVal(['txNominal', 'nominal'], t.nominal || 0);
     setVal(['txCatatan', 'catatan'], t.catatan || '');
 
-    // Ubah UI Form Mode Edit
     const titleEl = document.getElementById('formTitle');
     if (titleEl) titleEl.textContent = "Edit Transaksi";
 
@@ -1513,60 +1602,70 @@ function resetForm() {
 
     if (typeof updateCategoriesOptions === 'function') updateCategoriesOptions();
 
-            const currentPeriodTxs = transactions.filter(t => t.tanggal.startsWith(selectedPeriod));
-            let totalIncome = 0;
-            let totalExpense = 0;
-            let totalTetap = 0;
+    const currentPeriodTxs = transactions.filter(t => t.tanggal && t.tanggal.startsWith(selectedPeriod));
+    let totalIncome = 0;
+    let totalExpense = 0;
+    let totalTetap = 0;
 
-            currentPeriodTxs.forEach(t => {
-                if(t.jenis === "Pemasukkan") {
-                    totalIncome += t.nominal;
+    currentPeriodTxs.forEach(t => {
+        if (t.jenis === "Pemasukkan") {
+            totalIncome += t.nominal;
+        } else if (t.jenis !== "Transfer Out" && t.jenis !== "Transfer In") { // Abaikan Transfer di Rekap Murni
+            totalExpense += t.nominal;
+            if (t.jenis === "Pengeluaran Tetap") totalTetap += t.nominal;
+        }
+    });
+
+    const netSaldo = totalIncome - totalExpense;
+
+    const elIncome = document.getElementById('summaryIncome');
+    const elExpense = document.getElementById('summaryExpense');
+    const elTetap = document.getElementById('summaryTetap');
+    const elNet = document.getElementById('summaryNet');
+
+    if (elIncome) elIncome.textContent = formatRp(totalIncome);
+    if (elExpense) elExpense.textContent = formatRp(totalExpense);
+    if (elTetap) elTetap.textContent = formatRp(totalTetap);
+    if (elNet) elNet.textContent = formatRp(netSaldo);
+}
+
+function renderLaporanCharts() {
+    const allDompets = ["Bank BCA", "BRI", "MANDIRI", "BSI", "Seabank", "ShopeePay", "GoPay", "DANA", "OVO", "Tunai / Cash"];
+    const walletGrid = document.getElementById('walletBalancesGrid');
+    if (walletGrid) {
+        walletGrid.innerHTML = '';
+
+        allDompets.forEach(dompet => {
+            const walletTxs = transactions.filter(t => t.dompet === dompet);
+            if (walletTxs.length === 0 && (dompet !== "Bank BCA" && dompet !== "ShopeePay" && dompet !== "Tunai / Cash" && dompet !== "DANA")) {
+                return;
+            }
+
+            let balance = 0;
+            walletTxs.forEach(t => {
+                if (t.jenis === "Pemasukkan" || t.jenis === "Transfer In") {
+                    balance += t.nominal;
                 } else {
-                    totalExpense += t.nominal;
-                    if(t.jenis === "Pengeluaran Tetap") totalTetap += t.nominal;
+                    balance -= t.nominal;
                 }
             });
 
-            const netSaldo = totalIncome - totalExpense;
+            const isPositive = balance >= 0;
 
-            document.getElementById('summaryIncome').textContent = formatRp(totalIncome);
-            document.getElementById('summaryExpense').textContent = formatRp(totalExpense);
-            document.getElementById('summaryTetap').textContent = formatRp(totalTetap);
-            document.getElementById('summaryNet').textContent = formatRp(netSaldo);
-        }
-
-        function renderLaporanCharts() {
-    const allDompets = ["Bank BCA", "BRI", "MANDIRI", "BSI", "Seabank", "ShopeePay", "GoPay", "DANA", "OVO", "Tunai / Cash"];
-    const walletGrid = document.getElementById('walletBalancesGrid');
-    walletGrid.innerHTML = '';
-
-    allDompets.forEach(dompet => {
-        const walletTxs = transactions.filter(t => t.dompet === dompet);
-        if (walletTxs.length === 0 && (dompet !== "Bank BCA" && dompet !== "ShopeePay" && dompet !== "Tunai / Cash" && dompet !== "DANA")) {
-            return;
-        }
-
-        let balance = 0;
-        walletTxs.forEach(t => {
-            if (t.jenis === "Pemasukkan") balance += t.nominal;
-            else balance -= t.nominal;
+            walletGrid.innerHTML += `
+                <div class="card-custom p-4 rounded-2xl border border-gray-800 hover:border-gray-700 transition space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold tracking-wider text-gray-300 uppercase">${dompet}</span>
+                        <i class="fa-solid fa-wallet text-gray-400 text-xs"></i>
+                    </div>
+                    <div class="text-lg font-black font-mono ${isPositive ? 'text-emerald-500' : 'text-rose-500'}">
+                        ${formatRp(balance)}
+                    </div>
+                    <p class="text-[10px] text-gray-400">Saldo Net Akumulasi</p>
+                </div>
+            `;
         });
-
-        const isPositive = balance >= 0;
-
-        walletGrid.innerHTML += `
-            <div class="card-custom p-4 rounded-2xl border border-gray-800 hover:border-gray-700 transition space-y-2">
-                <div class="flex items-center justify-between">
-                    <span class="text-xs font-bold tracking-wider text-gray-300 uppercase">${dompet}</span>
-                    <i class="fa-solid fa-wallet text-gray-400 text-xs"></i>
-                </div>
-                <div class="text-lg font-black font-mono ${isPositive ? 'text-emerald-500' : 'text-rose-500'}">
-                    ${formatRp(balance)}
-                </div>
-                <p class="text-[10px] text-gray-400">Saldo Net Akumulasi</p>
-            </div>
-        `;
-    });
+    }
 
     // 🟢 1. HITUNG SALDO AWAL BAWAAN BULAN LALU
     const saldoAwal = typeof getSaldoAwalBulan === 'function' ? getSaldoAwalBulan(selectedPeriod) : 0;
