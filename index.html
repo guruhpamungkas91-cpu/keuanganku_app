@@ -1740,8 +1740,20 @@ function renderLaporanCharts() {
     if (walletGrid) {
         walletGrid.innerHTML = '';
 
+        // 🟢 1. TENTUKAN BATAS AKHIR TANGGAL (Sampai akhir bulan terpilih)
+        // Misal selectedPeriod = "2026-07", maka batas akhirnya adalah "2026-07-31"
+        const maxDateLimit = (typeof selectedPeriod !== 'undefined' && selectedPeriod) 
+            ? `${selectedPeriod}-31` 
+            : '9999-12-31';
+
         allDompets.forEach(dompet => {
-            const walletTxs = transactions.filter(t => t.dompet === dompet);
+            // 🟢 2. FILTER TRANSAKSI: Dompet yang sesuai DAN tanggal <= batas bulan terpilih
+            const walletTxs = transactions.filter(t => {
+                const isDompet = (t.dompet === dompet || t.wallet === dompet);
+                const isBeforeOrInMonth = !t.tanggal || String(t.tanggal) <= maxDateLimit;
+                return isDompet && isBeforeOrInMonth;
+            });
+
             if (walletTxs.length === 0 && (dompet !== "Bank BCA" && dompet !== "ShopeePay" && dompet !== "Tunai / Cash" && dompet !== "DANA")) {
                 return;
             }
@@ -1765,9 +1777,9 @@ function renderLaporanCharts() {
                         <i class="fa-solid fa-wallet text-gray-400 text-xs"></i>
                     </div>
                     <div class="text-lg font-black font-mono ${isPositive ? 'text-emerald-500' : 'text-rose-500'}">
-                        ${formatRp(balance)}
+                        ${typeof formatRp === 'function' ? formatRp(balance) : balance}
                     </div>
-                    <p class="text-[10px] text-gray-400">Saldo Net Akumulasi</p>
+                    <p class="text-[10px] text-gray-400">Saldo Akumulasi s/d ${selectedPeriod || 'Saat Ini'}</p>
                 </div>
             `;
         });
