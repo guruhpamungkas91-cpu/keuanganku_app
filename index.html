@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     
     <style>
         :root[data-theme="dark-cyber"] {
@@ -270,15 +271,13 @@
             </button>
         </nav>
 
-        <section id="content-transaksi" class="tab-content space-y-6">
-
     <!-- TAB 1: TRANSAKSI -->
 <section id="content-transaksi" class="tab-content space-y-6">
 
     <!-- AREA ATAS: FORM INPUT (KIRI) & QUICK CARDS (KANAN) -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
-        <!-- FORM INPUT TRANSAKSI (4 KOLOM KIRI) -->
+        <!-- FORM INPUT TRANSAKSI -->
         <div class="lg:col-span-4 no-print">
             <div class="card-custom rounded-2xl p-5 shadow-xl border border-gray-800 space-y-4">
                 
@@ -293,13 +292,13 @@
                             <p class="text-[11px] text-gray-400">Input pemasukan & pengeluaran kamu</p>
                         </div>
                     </div>
-                    <button id="cancelEditBtn" onclick="resetForm()" class="hidden text-xs text-red-500 hover:underline">
+                    <button id="cancelEditBtn" type="button" onclick="resetForm()" class="hidden text-xs text-red-500 hover:underline">
                         Batal
                     </button>
                 </div>
 
                 <!-- Form Transaksi -->
-                <form id="txForm" onsubmit="saveTransaction(event)" class="space-y-3.5 text-xs">
+                <form id="txForm" onsubmit="saveTransaction(event)" autocomplete="off" class="space-y-3.5 text-xs">
                     <input type="hidden" id="txId">
 
                     <!-- Jenis Transaksi -->
@@ -387,27 +386,23 @@
             </div>
         </div>
 
-        <!-- REKAP SUMMARY CARDS (8 KOLOM KANAN) -->
+        <!-- REKAP SUMMARY CARDS -->
         <div class="lg:col-span-8 space-y-4">
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <!-- Card Pemasukkan -->
                 <div class="card-custom p-4 rounded-2xl border border-gray-800 space-y-1">
                     <p class="text-[11px] text-gray-400 font-medium">Pemasukkan Bulan Ini</p>
                     <h4 id="summaryIncome" class="text-lg font-black text-emerald-400 font-mono">Rp 0</h4>
                 </div>
-                <!-- Card Pengeluaran -->
                 <div class="card-custom p-4 rounded-2xl border border-gray-800 space-y-1">
                     <p class="text-[11px] text-gray-400 font-medium">Pengeluaran Bulan Ini</p>
                     <h4 id="summaryExpense" class="text-lg font-black text-rose-400 font-mono">Rp 0</h4>
                 </div>
-                <!-- Card Saldo Net -->
                 <div class="card-custom p-4 rounded-2xl border border-gray-800 space-y-1">
                     <p class="text-[11px] text-gray-400 font-medium">Sisa Kas Bulan Ini</p>
                     <h4 id="summaryNet" class="text-lg font-black text-blue-400 font-mono">Rp 0</h4>
                 </div>
             </div>
 
-            <!-- Banner Info Fitur Transfer -->
             <div class="card-custom p-5 rounded-2xl border border-gray-800 flex items-center justify-between bg-gradient-to-r from-blue-900/20 to-transparent">
                 <div>
                     <h4 class="font-bold text-sm text-white">Fitur Transfer Antar Dompet Aktif! 🚀</h4>
@@ -418,117 +413,47 @@
 
     </div>
 
-    <!-- AREA BAWAH: TABEL DAFTAR TRANSAKSI LEBAR (100%) -->
+    <!-- TABEL TRANSAKSI -->
     <div class="card-custom p-5 rounded-2xl border border-gray-800 space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-800/50">
             <div>
                 <h3 class="font-bold text-white text-base">Daftar Transaksi Bulanan</h3>
-                <p class="text-xs text-gray-400">Menampilkan semua transaksi untuk periode terpilih</p>
+                <p id="txListSubtitle" class="text-xs text-gray-400">Menampilkan semua transaksi untuk periode terpilih</p>
             </div>
             
-            <!-- Area Filter Pencarian & Dropdown Kategori -->
+            <!-- ELEMENT FILTER -->
             <div class="flex flex-wrap items-center gap-2">
-                <input type="text" id="searchTx" oninput="renderTransactions()" placeholder="Cari transaksi..." class="input-custom rounded-xl px-3 py-1.5 text-xs">
+                <input type="text" id="filterSearch" oninput="renderTransactions()" placeholder="Cari transaksi..." class="input-custom rounded-xl px-3 py-1.5 text-xs">
                 <select id="filterKategori" onchange="renderTransactions()" class="input-custom rounded-xl px-3 py-1.5 text-xs">
-                    <option value="ALL">Semua Kategori</option>
+                    <option value="">Semua Kategori</option>
                 </select>
                 <select id="filterDompet" onchange="renderTransactions()" class="input-custom rounded-xl px-3 py-1.5 text-xs">
-                    <option value="ALL">Semua Dompet</option>
+                    <option value="">Semua Dompet</option>
                 </select>
             </div>
         </div>
 
-        <!-- Tempat JS nampilin tabel transaksi -->
         <div id="transactionListContainer" class="overflow-x-auto">
-            <!-- Table dirender via JS -->
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="text-[11px] font-semibold text-gray-400 uppercase border-b border-gray-800/80">
+                        <th class="py-2 px-3">Tanggal</th>
+                        <th class="py-2 px-3">Judul</th>
+                        <th class="py-2 px-3">Dompet</th>
+                        <th class="py-2 px-3">Kategori</th>
+                        <th class="py-2 px-3 text-right">Nominal</th>
+                        <th class="py-2 px-2 text-center no-print">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="txTableBody">
+                    <!-- Data dimasukkan oleh JS -->
+                </tbody>
+            </table>
         </div>
-    </div>
+    </div> <!-- 👈 Menutup Card Tabel Transaksi -->
+</section> <!-- 👈 Menutup SECTION Transaksi! SEKARANG UDAH RAPI & TERISOLASI! -->
 
-</section>
-
-                            <div>
-                                <label class="block mb-1.5 font-medium text-gray-300">Kategori</label>
-                                <select id="txKategori" class="w-full input-custom rounded-xl px-3 py-2 font-medium">
-                                </select>
-                            </div>
-
-                            <div>
-                                <label class="block mb-1.5 font-medium text-gray-300">Tanggal Transaksi</label>
-                                <input type="date" id="txTanggal" required class="w-full input-custom rounded-xl px-3 py-2">
-                            </div>
-
-                            <button type="submit" id="btnSubmitTx" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-xl shadow-lg shadow-blue-600/30 transition flex items-center justify-center gap-2">
-                                <i class="fa-solid fa-plus-circle"></i> Simpan Transaksi
-                            </button>
-                        </form>
-                    </div>
-                </div>
-
-                <div class="lg:col-span-8">
-                    <div class="card-custom rounded-2xl p-5 shadow-xl flex flex-col justify-between min-h-[500px]">
-                        <div>
-                            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-5 border-b border-gray-800/50 pb-4">
-                                <div>
-                                    <h2 class="font-bold text-base">Daftar Transaksi Bulanan</h2>
-                                    <p class="text-xs text-gray-400" id="txListSubtitle">Menampilkan 0 transaksi</p>
-                                </div>
-
-                                <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto text-xs no-print">
-                                    <input type="text" id="filterSearch" oninput="renderTransactions()" placeholder="Cari transaksi..." class="input-custom px-3 py-1.5 rounded-xl w-32 sm:w-36">
-                                    <select id="filterKategori" onchange="renderTransactions()" class="input-custom px-2.5 py-1.5 rounded-xl">
-                                        <option value="">Semua Kategori</option>
-                                    </select>
-                                    <select id="filterDompet" onchange="renderTransactions()" class="input-custom px-2.5 py-1.5 rounded-xl">
-                                        <option value="">Semua Dompet</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="overflow-x-auto">
-                                <table class="w-full text-left border-collapse">
-                                    <thead>
-                                        <tr class="text-[11px] uppercase tracking-wider text-gray-400 border-b border-gray-800/80">
-                                            <th class="py-2.5 px-3">Tanggal</th>
-                                            <th class="py-2.5 px-3">Transaksi</th>
-                                            <th class="py-2.5 px-3">Dompet</th>
-                                            <th class="py-2.5 px-3">Kategori</th>
-                                            <th class="py-2.5 px-3 text-right">Nominal</th>
-                                            <th class="py-2.5 px-2 text-center no-print">Aksi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="txTableBody" class="divide-y divide-gray-800/40 text-xs font-medium">
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                        <div class="bg-gray-800/60 p-4 rounded-xl border border-gray-700/50">
-                        <span class="text-xs text-gray-400 font-medium">Saldo Awal (Sisa Bulan Lalu)</span>
-                        <div id="summarySaldoAwal" class="text-lg font-bold text-sky-400 font-mono mt-1">Rp 0</div>
-                            </div>
-                        <div class="mt-6 pt-4 border-t border-gray-800/80 grid grid-cols-2 md:grid-cols-4 gap-3">
-                            <div class="card-custom bg-opacity-40 p-3 rounded-xl border border-gray-800">
-                                <span class="text-[10px] text-gray-400 block mb-0.5">Total Income</span>
-                                <span id="summaryIncome" class="text-sm md:text-base font-bold text-emerald-500">Rp 0</span>
-                            </div>
-                            <div class="card-custom bg-opacity-40 p-3 rounded-xl border border-gray-800">
-                                <span class="text-[10px] text-gray-400 block mb-0.5">Total Expense</span>
-                                <span id="summaryExpense" class="text-sm md:text-base font-bold text-rose-500">Rp 0</span>
-                            </div>
-                            <div class="card-custom bg-opacity-40 p-3 rounded-xl border border-gray-800">
-                                <span class="text-[10px] text-gray-400 block mb-0.5">Pengeluaran Tetap</span>
-                                <span id="summaryTetap" class="text-sm md:text-base font-bold text-blue-500">Rp 0</span>
-                            </div>
-                            <div class="card-custom bg-opacity-40 p-3 rounded-xl border border-gray-800">
-                                <span class="text-[10px] text-gray-400 block mb-0.5">Net Saldo</span>
-                                <span id="summaryNet" class="text-sm md:text-base font-bold text-emerald-500">Rp 0</span>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-
-            </div>
-        </section>
+                        
 
         <section id="content-laporan" class="tab-content hidden space-y-6">
             <div class="space-y-3">
@@ -1248,7 +1173,7 @@ function getSaldoAwalBulan(period) {
         .reduce((sum, t) => sum + (parseFloat(t.nominal) || 0), 0);
 
     const totalExpensePrev = prevTxs
-        .filter(t => t.jenis !== 'Pemasukkan')
+        .filter(t => t.jenis === 'Pengeluaran Harian' || t.jenis === 'Pengeluaran Tetap' || t.jenis === 'Pengeluaran Lainnya')
         .reduce((sum, t) => sum + (parseFloat(t.nominal) || 0), 0);
 
     // Saldo Kumulatif yang dibawa ke bulan ini
@@ -1271,11 +1196,16 @@ function renderSummary() {
 
     currentTxs.forEach(t => {
         const nominal = parseFloat(t.nominal) || 0;
-        if (t.jenis === 'Pemasukkan') {
-            incomeBulanIni += nominal;
-        } else {
+        if (t.jenis === 'Pemasukkan' || t.jenis === 'Transfer In') {
+            // Transfer In atau Pemasukkan murni bisa dianggap dana masuk/income (opsional, atau biarkan khusus Pemasukkan)
+            if (t.jenis === 'Pemasukkan') {
+                incomeBulanIni += nominal;
+            }
+        } else if (t.jenis === 'Pengeluaran Harian' || t.jenis === 'Pengeluaran Tetap' || t.jenis === 'Pengeluaran Lainnya') {
+            // HANYA hitung pengeluaran murni
             expenseBulanIni += nominal;
         }
+        // Catatan: jenis "Transfer Out" sengaja dilewati (diabaikan) agar tidak merusak rekap pengeluaran bulanan!
     });
 
     // C. Hitung Kas
@@ -1320,32 +1250,33 @@ function renderSummary() {
     if (typeof renderRecurring === 'function') renderRecurring();
     if (typeof renderSummary === 'function') renderSummary();
     if (typeof renderAnnualSummary === 'function') renderAnnualSummary();
-            
-            const activeTab = document.querySelector('.tab-content:not(.hidden)')?.id;
-            if (activeTab === 'content-laporan') renderLaporanCharts();
-            if (activeTab === 'content-rekap') renderAnnualSummary();
-        }
+    
+    const activeTab = document.querySelector('.tab-content:not(.hidden)')?.id;
+    if (activeTab === 'content-laporan' && typeof renderLaporanCharts === 'function') renderLaporanCharts();
+    if (activeTab === 'content-rekap' && typeof renderAnnualSummary === 'function') renderAnnualSummary();
+}
     
         function renderTransactions() {
     const tbody = document.getElementById('txTableBody');
     if (!tbody) return;
 
+    // Bersihkan tabel sebelum render
+    tbody.innerHTML = '';
+
     const searchInput = document.getElementById('filterSearch');
     const search = searchInput ? searchInput.value.toLowerCase() : '';
+    const filterKat = document.getElementById('filterKategori')?.value || '';
+    const filterDom = document.getElementById('filterDompet')?.value || '';
 
-    const filterKatInput = document.getElementById('filterKategori');
-    const filterKat = filterKatInput ? filterKatInput.value : '';
-
-    const filterDomInput = document.getElementById('filterDompet');
-    const filterDom = filterDomInput ? filterDomInput.value : '';
-
-    // Guard: Pastikan transactions selalu Array
     if (!Array.isArray(transactions)) transactions = [];
 
-    // Filter berdasarkan Periode (Aman jika t.tanggal undefined/null)
-    let filtered = transactions.filter(t => t && t.tanggal && String(t.tanggal).startsWith(selectedPeriod || ''));
+    // 🔴 FIX FILTER PERIODE: Jika selectedPeriod ada & tidak kosong, filter! Jika tidak ada/kosong, tampilkan SEMUA.
+    let filtered = transactions;
+    if (typeof selectedPeriod !== 'undefined' && selectedPeriod && selectedPeriod.trim() !== '') {
+        filtered = transactions.filter(t => t && t.tanggal && String(t.tanggal).startsWith(selectedPeriod));
+    }
 
-    // Filter Pencarian (Aman dari undefined/null)
+    // Filter Search (Judul / Catatan)
     if (search) {
         filtered = filtered.filter(t => {
             const judulStr = String(t.judul || t.title || t.catatan || '').toLowerCase();
@@ -1354,42 +1285,35 @@ function renderSummary() {
         });
     }
 
-    if (filterKat) {
-        filtered = filtered.filter(t => t.kategori === filterKat);
-    }
-    if (filterDom) {
-        filtered = filtered.filter(t => (t.dompet || t.wallet) === filterDom);
-    }
+    // Filter Kategori & Dompet
+    if (filterKat) filtered = filtered.filter(t => t.kategori === filterKat);
+    if (filterDom) filtered = filtered.filter(t => (t.dompet || t.wallet) === filterDom);
 
-    // 🟢 URUTKAN TANGGAL: Tanggal terbaru di paling atas (Descending)
+    // Sort Tanggal Terbaru
     filtered.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
 
-    // Update Badge & Subtitle
+    // Update Badge
     const badgeCount = document.getElementById('badgeTxCount');
     if (badgeCount) badgeCount.textContent = filtered.length;
 
-    const subtitle = document.getElementById('txListSubtitle');
-    if (subtitle) subtitle.textContent = `Menampilkan ${filtered.length} transaksi untuk periode ${selectedPeriod}`;
-
-    tbody.innerHTML = '';
-
+    // Jika Kosong
     if (filtered.length === 0) {
         tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-gray-400">Tidak ada transaksi ditemukan untuk periode ini.</td></tr>`;
-    } else {
-        filtered.forEach(t => {
-            const isIncome = t.jenis === "Pemasukkan";
-            
-            // Fallback Guard (Biar gak tampil tulisan "undefined")
-            const displayJudul = t.judul || t.title || t.catatan || 'Tanpa Judul';
-            const displayDompet = t.dompet || t.wallet || t.sumber || 'Tunai / Cash';
-            const displayKategori = t.kategori || 'Lainnya';
-            const displayTanggal = t.tanggal || '-';
+        return;
+    }
 
-            const badgeClass = typeof getDompetBadgeClass === 'function' ? getDompetBadgeClass(displayDompet) : 'bg-gray-800 text-gray-300';
-            
-            const tr = document.createElement('tr');
-            tr.className = "hover:bg-white/5 transition border-b border-gray-800/40";
-            tr.innerHTML = `
+    // Render Rows
+    let rowsHtml = '';
+    filtered.forEach(t => {
+        const isIncome = t.jenis === "Pemasukkan" || t.jenis === "Transfer In";
+        const displayJudul = t.judul || t.title || t.catatan || 'Tanpa Judul';
+        const displayDompet = t.dompet || t.wallet || 'Tunai / Cash';
+        const displayKategori = t.kategori || 'Lainnya';
+        const displayTanggal = t.tanggal || '-';
+        const badgeClass = typeof getDompetBadgeClass === 'function' ? getDompetBadgeClass(displayDompet) : 'bg-gray-800 text-gray-300';
+
+        rowsHtml += `
+            <tr class="hover:bg-white/5 transition border-b border-gray-800/40">
                 <td class="py-3 px-3 whitespace-nowrap text-gray-400 font-mono text-[11px]">${displayTanggal}</td>
                 <td class="py-3 px-3 font-semibold text-gray-200">${displayJudul}</td>
                 <td class="py-3 px-3">
@@ -1411,9 +1335,46 @@ function renderSummary() {
                         </button>
                     </div>
                 </td>
-            `;
-            tbody.appendChild(tr);
-        });
+            </tr>
+        `;
+    });
+
+    tbody.innerHTML = rowsHtml;
+}
+
+function deleteTransaction(id) {
+    if (!confirm('Apakah kamu yakin ingin menghapus transaksi ini?')) return;
+
+    if (!Array.isArray(transactions)) transactions = [];
+
+    // Cari transaksi yang mau dihapus berdasarkan ID atau transferPairId-nya
+    const targetTx = transactions.find(t => String(t.id) === String(id));
+    
+    if (targetTx && targetTx.transferPairId) {
+        // Jika ini adalah data transfer (berpasangan), HAPUS KEDUANYA (Out & In)
+        transactions = transactions.filter(t => t.transferPairId !== targetTx.transferPairId);
+    } else {
+        // Jika transaksi biasa, hapus satu saja
+        transactions = transactions.filter(t => String(t.id) !== String(id));
+    }
+
+    // Simpan perubahan ke LocalStorage
+    if (typeof saveData === 'function') {
+        saveData();
+    } else {
+        localStorage.setItem('keuanganku_transactions', JSON.stringify(transactions));
+    }
+
+    if (typeof showToast === 'function') {
+        showToast('Transaksi berhasil dihapus');
+    }
+
+    // Refresh tampilan tabel & rekap
+    if (typeof renderAll === 'function') {
+        renderAll();
+    } else {
+        if (typeof renderTransactions === 'function') renderTransactions();
+        if (typeof resetForm === 'function') resetForm();
     }
 }
         function refreshData() {
@@ -1421,112 +1382,49 @@ function renderSummary() {
             showToast('Data berhasil diperbarui!');
         }
 
-        function switchTab(tabKey) {
-    // 1. Simpan draft inputan jika user mau KELUAR dari tab transaksi
-    const currentTxForm = document.getElementById('txForm');
-    if (currentTxForm) {
-        const draftData = {
-            jenis: document.getElementById('txJenis')?.value || '',
-            judul: document.getElementById('txJudul')?.value || '',
-            nominal: document.getElementById('txNominal')?.value || '',
-            dompet: document.getElementById('txDompet')?.value || '',
-            dompetTujuan: document.getElementById('txDompetTujuan')?.value || '',
-            kategori: document.getElementById('txKategori')?.value || '',
-            tanggal: document.getElementById('txTanggal')?.value || ''
-        };
-        localStorage.setItem('tempTxFormDraft', JSON.stringify(draftData));
-    }
+       function switchTab(tabKey) {
+    // 1. SEMBUNYIKAN SEMUA CONTENT TAB (Paksa tambah class 'hidden')
+    const allContents = document.querySelectorAll('.tab-content');
+    allContents.forEach(content => {
+        content.classList.add('hidden');
+    });
 
-    // 2. Ubah Style Tombol Tab Active/Inactive
-    document.querySelectorAll('.tab-btn').forEach(btn => {
+    // 2. RESET GAYA SEMUA TOMBOL NAV (Kembalikan ke warna default)
+    const allTabBtns = document.querySelectorAll('.tab-btn');
+    allTabBtns.forEach(btn => {
+        // Hapus warna biru aktif
         btn.classList.remove('bg-blue-600', 'text-white', 'shadow-lg', 'shadow-blue-600/30');
+        // Tambahkan gaya default tombol non-aktif
         btn.classList.add('card-custom', 'opacity-80');
     });
+
+    // 3. TAMPILKAN CONTENT TAB YANG DIPILIH
+    const targetContent = document.getElementById(`content-${tabKey}`);
+    if (targetContent) {
+        targetContent.classList.remove('hidden');
+    } else {
+        console.error(`ERROR: Tidak ditemukan section dengan ID: content-${tabKey}`);
+    }
+
+    // 4. BERI WARNA BIRU PADA TOMBOL TAB YANG SEDANG AKTIF
     const activeBtn = document.getElementById(`tab-${tabKey}`);
-    if(activeBtn) {
+    if (activeBtn) {
+        // Hapus gaya non-aktif
         activeBtn.classList.remove('card-custom', 'opacity-80');
+        // Tambahkan gaya biru aktif
         activeBtn.classList.add('bg-blue-600', 'text-white', 'shadow-lg', 'shadow-blue-600/30');
+    } else {
+        console.error(`ERROR: Tidak ditemukan tombol dengan ID: tab-${tabKey}`);
     }
 
-    // 3. Sembunyikan Semua Tab & Tampilkan Tab Aktif
-    document.querySelectorAll('.tab-content').forEach(sec => sec.classList.add('hidden'));
-    const activeContent = document.getElementById(`content-${tabKey}`);
-    if(activeContent) activeContent.classList.remove('hidden');
-
-    // 4. Jika user BALIK KEMBALI ke tab 'transaksi'
-    if (tabKey === 'transaksi') {
-        // 🔴 PENTING: Panggil pemicu opsi kategori & dompet tujuan dulu!
-        if (typeof updateCategoriesOptions === 'function') {
-            updateCategoriesOptions(); 
-        }
-
-        const savedDraft = localStorage.getItem('tempTxFormDraft');
-        if (savedDraft) {
-            const data = JSON.parse(savedDraft);
-            
-            if(data.jenis && document.getElementById('txJenis')) {
-                document.getElementById('txJenis').value = data.jenis;
-                // Jalankan pemicu ubah jenis biar kategori menyesuaikan
-                if (typeof updateCategoriesOptions === 'function') updateCategoriesOptions();
-            }
-            
-            if(data.judul && document.getElementById('txJudul')) document.getElementById('txJudul').value = data.judul;
-            if(data.nominal && document.getElementById('txNominal')) document.getElementById('txNominal').value = data.nominal;
-            if(data.dompet && document.getElementById('txDompet')) document.getElementById('txDompet').value = data.dompet;
-            if(data.dompetTujuan && document.getElementById('txDompetTujuan')) document.getElementById('txDompetTujuan').value = data.dompetTujuan;
-            if(data.tanggal && document.getElementById('txTanggal')) document.getElementById('txTanggal').value = data.tanggal;
-            
-            // Isi kategori SETELAH option-nya ter-render
-            setTimeout(() => {
-                if(data.kategori && document.getElementById('txKategori')) {
-                    document.getElementById('txKategori').value = data.kategori;
-                }
-            }, 50);
-        }
-    }
-
-    // 5. Render Chart/Tabel Tab Lain
-    if(tabKey === 'laporan') renderLaporanCharts();
-    if(tabKey === 'anggaran') renderBudgets();
-    if(tabKey === 'impian') renderGoals();
-    if(tabKey === 'hutang') renderDebts();
-    if(tabKey === 'tagihan') renderRecurring();
-    if(tabKey === 'rekap') renderAnnualSummary();
-}
-
-        function updateCategoriesOptions() {
-    const jenisEl = document.getElementById('txJenis');
-    if (!jenisEl) return;
-    
-    const jenis = jenisEl.value;
-    const katSelect = document.getElementById('txKategori');
-    const containerTujuan = document.getElementById('containerDompetTujuan');
-
-    // 1. Toggle Tampilan Input Dompet Tujuan
-    if (containerTujuan) {
-        if (jenis === "Transfer / Top Up") {
-            containerTujuan.classList.remove('hidden'); // Munculkan dompet tujuan
-        } else {
-            containerTujuan.classList.add('hidden');    // Sembunyikan kalau transaksi biasa
-        }
-    }
-
-    // 2. Populate Opsi Kategori
-    if (katSelect) {
-        katSelect.innerHTML = '';
-        
-        // Jika Transfer / Top Up, otomatis pakai kategori "Transfer / Top Up"
-        const list = (jenis === "Transfer / Top Up") 
-            ? ["Transfer / Top Up"] 
-            : (CATEGORIES[jenis] || ["Lainnya"]);
-
-        list.forEach(k => {
-            const opt = document.createElement('option');
-            opt.value = k;
-            opt.textContent = k;
-            katSelect.appendChild(opt);
-        });
-    }
+    // 5. RENDER REKAP DATA KHUSUS
+    if (tabKey === 'transaksi' && typeof renderTransactions === 'function') renderTransactions();
+    if (tabKey === 'laporan' && typeof renderLaporanCharts === 'function') renderLaporanCharts();
+    if (tabKey === 'rekap' && typeof renderAnnualSummary === 'function') renderAnnualSummary();
+    if (tabKey === 'anggaran' && typeof renderBudgets === 'function') renderBudgets();
+    if (tabKey === 'impian' && typeof renderGoals === 'function') renderGoals();
+    if (tabKey === 'hutang' && typeof renderDebts === 'function') renderDebts();
+    if (tabKey === 'tagihan' && typeof renderRecurring === 'function') renderRecurring();
 }
 
         function populateFilterOptions() {
@@ -1725,6 +1623,55 @@ function editTransaction(id) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+// FUNGSI UTAMA KATEGORI (Yang Tadi Hilang/Gak Ada)
+function updateCategoriesOptions() {
+    const jenisEl = document.getElementById('txJenis');
+    if (!jenisEl) return;
+    
+    const jenis = jenisEl.value;
+    const katSelect = document.getElementById('txKategori');
+    const containerTujuan = document.getElementById('containerDompetTujuan');
+
+    // 1. Tampilkan / Sembunyikan Dompet Tujuan jika Transfer
+    if (containerTujuan) {
+        if (jenis === "Transfer / Top Up") {
+            containerTujuan.classList.remove('hidden');
+        } else {
+            containerTujuan.classList.add('hidden');
+        }
+    }
+
+    // 2. Isi Opsi Kategori Sesuai Jenis Transaksi
+    if (katSelect) {
+        const currentSelected = katSelect.value;
+        katSelect.innerHTML = '';
+
+        // Daftar Kategori Default
+        const defaultCategories = {
+            "Pemasukkan": ["Gaji", "Bonus", "Investasi", "Penjualan", "Lainnya"],
+            "Pengeluaran Tetap": ["Sewa / Kontrakan", "Listrik & Air", "Internet / Pulsa", "Cicilan", "Asuransi"],
+            "Pengeluaran Harian": ["Makanan & Minuman", "Transportasi", "Rokok & Jajan", "Belanja Bulanan", "Hiburan"],
+            "Pengeluaran Lainnya": ["Sedekah", "Kesehatan", "Pendidikan", "Pajak", "Lain-Lain"],
+            "Transfer / Top Up": ["Transfer / Top Up"]
+        };
+
+        // Ambil dari variabel CATEGORIES jika ada, atau gunakan default
+        const list = (typeof CATEGORIES !== 'undefined' && CATEGORIES[jenis]) 
+            ? CATEGORIES[jenis] 
+            : (defaultCategories[jenis] || ["Lainnya"]);
+
+        list.forEach(k => {
+            const opt = document.createElement('option');
+            opt.value = k;
+            opt.textContent = k;
+            katSelect.appendChild(opt);
+        });
+
+        if (currentSelected && list.includes(currentSelected)) {
+            katSelect.value = currentSelected;
+        }
+    }
+}
 function resetForm() {
     const form = document.getElementById('txForm') || document.getElementById('transactionForm');
     if (form) form.reset();
@@ -1787,10 +1734,11 @@ function renderLaporanCharts() {
 
             let balance = 0;
             walletTxs.forEach(t => {
+                const nominal = parseFloat(t.nominal) || 0;
                 if (t.jenis === "Pemasukkan" || t.jenis === "Transfer In") {
-                    balance += t.nominal;
-                } else {
-                    balance -= t.nominal;
+                    balance += nominal;
+                } else if (t.jenis === "Pengeluaran Harian" || t.jenis === "Pengeluaran Tetap" || t.jenis === "Pengeluaran Lainnya" || t.jenis === "Transfer Out") {
+                    balance -= nominal;
                 }
             });
 
@@ -1823,15 +1771,21 @@ function renderLaporanCharts() {
 
     const expCategories = {};
 
+    // 🟢 HANYA HITUNG PENGELUARAN MURNI
     currentTxs.forEach(t => {
-        if(t.jenis === "Pemasukkan") {
-            incomeTotal += t.nominal;
-        } else {
-            if (t.jenis === "Pengeluaran Tetap") expTetapTotal += t.nominal;
-            else if (t.jenis === "Pengeluaran Harian") expHarianTotal += t.nominal;
-            else expLainTotal += t.nominal;
-
-            expCategories[t.kategori] = (expCategories[t.kategori] || 0) + t.nominal;
+        const nominal = parseFloat(t.nominal) || 0;
+        
+        if (t.jenis === "Pemasukkan") {
+            incomeTotal += nominal;
+        } else if (t.jenis === "Pengeluaran Tetap") {
+            expTetapTotal += nominal;
+            if (t.kategori) expCategories[t.kategori] = (expCategories[t.kategori] || 0) + nominal;
+        } else if (t.jenis === "Pengeluaran Harian") {
+            expHarianTotal += nominal;
+            if (t.kategori) expCategories[t.kategori] = (expCategories[t.kategori] || 0) + nominal;
+        } else if (t.jenis === "Pengeluaran Lainnya") {
+            expLainTotal += nominal;
+            if (t.kategori) expCategories[t.kategori] = (expCategories[t.kategori] || 0) + nominal;
         }
     });
 
@@ -1845,7 +1799,16 @@ function renderLaporanCharts() {
 
     document.getElementById('laporanTotalIncome').textContent = formatRp(incomeTotal);
     document.getElementById('laporanExpenseTetap').textContent = formatRp(expTetapTotal);
-    document.getElementById('laporanExpenseHarian').textContent = formatRp(expHarianTotal);
+    
+    // 🔴 [DIBENERIN DI SINI]: 
+    // Gabungkan Pengeluaran Harian + Pengeluaran Lainnya ke card UI "Pengeluaran Harian" 
+    // (Atau update ke elemen 'laporanExpenseLain' jika ada card-nya)
+    const elHarian = document.getElementById('laporanExpenseHarian');
+    if (elHarian) elHarian.textContent = formatRp(expHarianTotal + expLainTotal);
+
+    const elLain = document.getElementById('laporanExpenseLain');
+    if (elLain) elLain.textContent = formatRp(expLainTotal);
+
     document.getElementById('laporanNetSavings').textContent = formatRp(netSavings);
     document.getElementById('laporanPeriodLabel1').textContent = `Bulan ${selectedPeriod}`;
 
@@ -1882,75 +1845,80 @@ function renderLaporanCharts() {
         ratioBarEl.className = "bg-amber-500 h-2.5 rounded-full transition-all duration-500";
     }
 
-    const chartTextColor = getChartTextColor();
-    const chartGridColor = getChartGridColor();
+    const chartTextColor = typeof getChartTextColor === 'function' ? getChartTextColor() : '#9ca3af';
+    const chartGridColor = typeof getChartGridColor === 'function' ? getChartGridColor() : 'rgba(255,255,255,0.1)';
 
     // 🟢 5. UPDATE BAR CHART (TOTAL DANA TERSEDIA VS PENGELUARAN)
-    const ctx1 = document.getElementById('chartIncomeExpense').getContext('2d');
-    if(chartIncExp) chartIncExp.destroy();
-    chartIncExp = new Chart(ctx1, {
-        type: 'bar',
-        data: {
-            labels: ['Total Dana Kas', 'Pengeluaran'],
-            datasets: [{
-                label: 'Nominal (Rp)',
-                data: [totalDanaTersedia, totalExpense], // Menampilkan modal kas nyata vs pengeluaran
-                backgroundColor: ['#10b981', '#ef4444'],
-                borderRadius: 8
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-                x: { ticks: { color: chartTextColor }, grid: { display: false } },
-                y: { ticks: { color: chartTextColor }, grid: { color: chartGridColor } }
+    const ctx1 = document.getElementById('chartIncomeExpense')?.getContext('2d');
+    if (ctx1) {
+        if (typeof chartIncExp !== 'undefined' && chartIncExp) chartIncExp.destroy();
+        chartIncExp = new Chart(ctx1, {
+            type: 'bar',
+            data: {
+                labels: ['Total Dana Kas', 'Pengeluaran'],
+                datasets: [{
+                    label: 'Nominal (Rp)',
+                    data: [totalDanaTersedia, totalExpense],
+                    backgroundColor: ['#10b981', '#ef4444'],
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { ticks: { color: chartTextColor }, grid: { display: false } },
+                    y: { ticks: { color: chartTextColor }, grid: { color: chartGridColor } }
+                }
             }
-        }
-    });
+        });
+    }
 
-    const ctx2 = document.getElementById('chartProporsi').getContext('2d');
-    if(chartProp) chartProp.destroy();
+    const ctx2 = document.getElementById('chartProporsi')?.getContext('2d');
+    if (ctx2) {
+        if (typeof chartProp !== 'undefined' && chartProp) chartProp.destroy();
 
-    const labels = Object.keys(expCategories);
-    const dataVals = Object.values(expCategories);
-    const colors = ['#f43f5e', '#3b82f6', '#8b5cf6', '#f59e0b', '#10b981', '#06b6d4', '#ec4899', '#6366f1'];
+        const labels = Object.keys(expCategories);
+        const dataVals = Object.values(expCategories);
+        const colors = ['#f43f5e', '#3b82f6', '#8b5cf6', '#f59e0b', '#10b981', '#06b6d4', '#ec4899', '#6366f1'];
 
-    chartProp = new Chart(ctx2, {
-        type: 'doughnut',
-        data: {
-            labels: labels.length ? labels : ['Belum Ada Pengeluaran'],
-            datasets: [{
-                data: dataVals.length ? dataVals : [1],
-                backgroundColor: dataVals.length ? colors.slice(0, labels.length) : ['#9ca3af']
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, color: chartTextColor } } }
-        }
-    });
+        chartProp = new Chart(ctx2, {
+            type: 'doughnut',
+            data: {
+                labels: labels.length ? labels : ['Belum Ada Pengeluaran'],
+                datasets: [{
+                    data: dataVals.length ? dataVals : [1],
+                    backgroundColor: dataVals.length ? colors.slice(0, labels.length) : ['#9ca3af']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, color: chartTextColor } } }
+            }
+        });
+    }
 
     const breakdownContainer = document.getElementById('laporanKategoriBreakdown');
-    breakdownContainer.innerHTML = '';
-    
-    if(Object.keys(expCategories).length === 0) {
-        breakdownContainer.innerHTML = '<p class="text-gray-400 col-span-3 text-center py-4">Belum ada rincian pengeluaran di bulan ini.</p>';
-    } else {
-        Object.entries(expCategories).forEach(([kat, total]) => {
-            const pct = totalExpense > 0 ? ((total / totalExpense) * 100).toFixed(1) : 0;
-            breakdownContainer.innerHTML += `
-                <div class="card-custom p-3 rounded-xl flex items-center justify-between border border-gray-800">
-                    <div>
-                        <span class="font-bold text-gray-200 block">${kat}</span>
-                        <span class="text-[10px] text-gray-400">${pct}% dari total pengeluaran</span>
+    if (breakdownContainer) {
+        breakdownContainer.innerHTML = '';
+        if (Object.keys(expCategories).length === 0) {
+            breakdownContainer.innerHTML = '<p class="text-gray-400 col-span-3 text-center py-4">Belum ada rincian pengeluaran di bulan ini.</p>';
+        } else {
+            Object.entries(expCategories).forEach(([kat, total]) => {
+                const pct = totalExpense > 0 ? ((total / totalExpense) * 100).toFixed(1) : 0;
+                breakdownContainer.innerHTML += `
+                    <div class="card-custom p-3 rounded-xl flex items-center justify-between border border-gray-800">
+                        <div>
+                            <span class="font-bold text-gray-200 block">${kat}</span>
+                            <span class="text-[10px] text-gray-400">${pct}% dari total pengeluaran</span>
+                        </div>
+                        <span class="font-mono font-bold text-rose-500">${formatRp(total)}</span>
                     </div>
-                    <span class="font-mono font-bold text-rose-500">${formatRp(total)}</span>
-                </div>
-            `;
-        });
+                `;
+            });
+        }
     }
 }
 
@@ -2619,6 +2587,7 @@ function renderBudgets() {
         }
     });
 }
+
     </script>
 </body>
 </html>
