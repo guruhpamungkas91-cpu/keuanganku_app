@@ -422,16 +422,28 @@
             </div>
             
             <!-- ELEMENT FILTER -->
-            <div class="flex flex-wrap items-center gap-2">
-                <input type="text" id="filterSearch" oninput="renderTransactions()" placeholder="Cari transaksi..." class="input-custom rounded-xl px-3 py-1.5 text-xs">
-                <select id="filterKategori" onchange="renderTransactions()" class="input-custom rounded-xl px-3 py-1.5 text-xs">
-                    <option value="">Semua Kategori</option>
-                </select>
-                <select id="filterDompet" onchange="renderTransactions()" class="input-custom rounded-xl px-3 py-1.5 text-xs">
-                    <option value="">Semua Dompet</option>
-                </select>
-            </div>
-        </div>
+             <div class="flex flex-wrap items-center gap-2">
+    <input type="text" id="filterSearch" oninput="renderTransactions()" placeholder="Cari transaksi..." class="input-custom rounded-xl px-3 py-1.5 text-xs">
+    </div>
+    <!-- 🟢 FILTER JENIS TRANSAKSI BARU -->
+    <select id="filterJenis" onchange="renderTransactions()" class="input-custom rounded-xl px-3 py-1.5 text-xs">
+        <option value="">Semua Jenis</option>
+        <option value="Pemasukkan">Pemasukkan</option>
+        <option value="Pengeluaran Tetap">Pengeluaran Tetap</option>
+        <option value="Pengeluaran Harian">Pengeluaran Harian</option>
+        <option value="Pengeluaran Lainnya">Pengeluaran Lainnya</option>
+        <option value="Transfer Out">Transfer Out</option>
+        <option value="Transfer In">Transfer In</option>
+    </select>
+
+    <select id="filterKategori" onchange="renderTransactions()" class="input-custom rounded-xl px-3 py-1.5 text-xs">
+        <option value="">Semua Kategori</option>
+    </select>
+    <select id="filterDompet" onchange="renderTransactions()" class="input-custom rounded-xl px-3 py-1.5 text-xs">
+        <option value="">Semua Dompet</option>
+    </select>
+</div>
+        
 
         <div id="transactionListContainer" class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
@@ -1265,6 +1277,7 @@ function renderSummary() {
 
     const searchInput = document.getElementById('filterSearch');
     const search = searchInput ? searchInput.value.toLowerCase() : '';
+    const filterJenis = document.getElementById('filterJenis')?.value || ''; // 🟢 1. BACA FILTER JENIS
     const filterKat = document.getElementById('filterKategori')?.value || '';
     const filterDom = document.getElementById('filterDompet')?.value || '';
 
@@ -1285,7 +1298,8 @@ function renderSummary() {
         });
     }
 
-    // Filter Kategori & Dompet
+    // Filter Jenis, Kategori & Dompet
+    if (filterJenis) filtered = filtered.filter(t => t.jenis === filterJenis); // 🟢 2. SARING BERDASARKAN JENIS
     if (filterKat) filtered = filtered.filter(t => t.kategori === filterKat);
     if (filterDom) filtered = filtered.filter(t => (t.dompet || t.wallet) === filterDom);
 
@@ -1780,16 +1794,14 @@ function renderLaporanCharts() {
         } else if (t.jenis === "Pengeluaran Tetap") {
             expTetapTotal += nominal;
             if (t.kategori) expCategories[t.kategori] = (expCategories[t.kategori] || 0) + nominal;
-        } else if (t.jenis === "Pengeluaran Harian") {
+        } else if (t.jenis !== "Transfer Out" && t.jenis !== "Transfer In") {
+            // 🟢 Semua pengeluaran selain transfer (Harian, Lainnya, dll) langsung diserap ke sini
             expHarianTotal += nominal;
-            if (t.kategori) expCategories[t.kategori] = (expCategories[t.kategori] || 0) + nominal;
-        } else if (t.jenis === "Pengeluaran Lainnya") {
-            expLainTotal += nominal;
             if (t.kategori) expCategories[t.kategori] = (expCategories[t.kategori] || 0) + nominal;
         }
     });
 
-    const totalExpense = expTetapTotal + expHarianTotal + expLainTotal;
+    const totalExpense = expTetapTotal + expHarianTotal;
     
     // 🟢 2. DANA TERSEDIA = Saldo Awal Bulan Lalu + Pemasukkan Bulan Ini
     const totalDanaTersedia = saldoAwal + incomeTotal;
