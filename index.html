@@ -2161,26 +2161,30 @@ let myFinancialChart = null; // Variabel penyimpan instance chart biar bisa di-d
     const targetPeriod = (typeof selectedPeriod !== 'undefined' && selectedPeriod) ? String(selectedPeriod).trim() : '';
 
     const currentTxs = (typeof transactions !== 'undefined' && Array.isArray(transactions)) ? transactions.filter(t => {
-        if (!t || !t.tanggal) return false;
-        const normalizedDate = String(t.tanggal).trim().replace(/[/.]/g, '-');
-        
-        if (!targetPeriod) return true;
-        if (normalizedDate.startsWith(targetPeriod)) return true;
+    if (!t || !t.tanggal) return false;
+    
+    // Pakai penanganan string murni tanpa new Date()
+    const rawDate = String(t.tanggal).trim().replace(/[/.]/g, '-');
+    const target = String(selectedPeriod).trim(); // contoh: "2026-07"
 
-        const parts = normalizedDate.split('-');
-        if (parts.length === 3) {
-            let year = '', month = '';
-            if (parts[2].length === 4) {
-                year = parts[2];
-                month = parts[1].padStart(2, '0');
-            } else if (parts[0].length === 4) {
-                year = parts[0];
-                month = parts[1].padStart(2, '0');
-            }
-            if (year && month) return `${year}-${month}` === targetPeriod;
+    // YYYY-MM-DD
+    if (rawDate.startsWith(target)) return true;
+
+    // DD-MM-YYYY
+    const parts = rawDate.split('-');
+    if (parts.length === 3) {
+        let yyyy = '', mm = '';
+        if (parts[2].length === 4) {
+            yyyy = parts[2];
+            mm = parts[1].padStart(2, '0');
+        } else if (parts[0].length === 4) {
+            yyyy = parts[0];
+            mm = parts[1].padStart(2, '0');
         }
-        return false;
-    }) : [];
+        return `${yyyy}-${mm}` === target;
+    }
+    return false;
+}) : [];
 
     let incomeTotal = 0;
     let expTetapTotal = 0;
