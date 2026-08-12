@@ -2191,62 +2191,43 @@ let myFinancialChart = null; // Variabel penyimpan instance chart biar bisa di-d
         let sisaKas = 0;
 
         function renderFinancialTrendChart() {
-    const container = document.getElementById('financialTrendChart');
-    if (!container) return;
+        const fin = calculateFinancials();
+        const container = document.getElementById('financialTrendChart');
+        if (!container || typeof Highcharts === 'undefined') return;
 
-    // 1. Ambil data dari kalkulator terpusat
-    const data = calculateFinancials();
-
-    // 2. Update Kartu UI Atas
-    updateCardUI(data);
-
-    // 3. Render Highcharts 3D Pie Chart
-    Highcharts.chart('financialTrendChart', {
-        chart: {
-            type: 'pie',
-            backgroundColor: 'transparent',
-            options3d: { enabled: true, alpha: 60, beta: 0, depth: 45, viewDistance: 25 },
-            margin: [0, 0, 0, 0]
-        },
-        title: { text: null },
-        credits: { enabled: false },
-        tooltip: {
-            headerFormat: '<span style="font-size:11px">{point.key}</span><br>',
-            pointFormat: '<b>Rp {point.y:,.0f}</b>',
-            backgroundColor: 'rgba(15, 23, 42, 0.95)',
-            style: { color: '#ffffff', fontSize: '12px' },
-            borderRadius: 8
-        },
-        plotOptions: {
-            pie: {
-                allowPointSelect: true,
-                cursor: 'pointer',
-                depth: 40,
-                slicedOffset: 15,
-                dataLabels: {
-                    enabled: true,
-                    format: '<b>{point.name}</b><br>Rp {point.y:,.0f}',
-                    distance: 10,
-                    style: {
-                        color: typeof getChartTextColor === 'function' ? getChartTextColor() : '#9ca3af',
-                        fontSize: '10px',
-                        fontWeight: 'bold',
-                        textOutline: 'none'
+        Highcharts.chart('financialTrendChart', {
+            chart: {
+                type: 'pie',
+                options3d: { enabled: true, alpha: 45, beta: 0 },
+                backgroundColor: 'transparent'
+            },
+            title: { text: null },
+            accessibility: { enabled: false },
+            tooltip: { pointFormat: '{series.name}: <b>{point.y}</b> (<b>{point.percentage:.1f}%</b>)' },
+            plotOptions: {
+                pie: {
+                    allowPointSelect: true,
+                    cursor: 'pointer',
+                    depth: 35,
+                    dataLabels: {
+                        enabled: true,
+                        format: '{point.name}: {point.percentage:.1f}%',
+                        style: { color: getChartTextColor() }
                     }
                 }
-            }
-        },
-        series: [{
-            name: 'Nominal',
-            data: [
-                // 🟢 PASTIKAN PEMANGGILAN PROPERTI OBJEK SUDAH PAS
-                { name: 'Pemasukan', y: Number(data.incomeTotal || 0), color: '#10b981', sliced: true, selected: true },
-                { name: 'Pengeluaran', y: Number(data.expenseTotal || 0), color: '#f43f5e' },
-                { name: 'Sisa Kas Bulan Ini', y: Number(data.sisaKasMurni || 0), color: '#3b82f6' }
-            ]
-        }]
-    });
-}
+            },
+            series: [{
+                type: 'pie',
+                name: 'Nominal',
+                data: [
+                    { name: 'Pengeluaran Tetap', y: fin.expTetapTotal, color: '#f59e0b' },
+                    { name: 'Pengeluaran Harian', y: fin.expHarianTotal, color: '#f43f5e' },
+                    { name: 'Pengeluaran Lainnya', y: fin.expLainTotal, color: '#8b5cf6' },
+                    { name: 'Sisa Kas', y: Math.max(0, fin.sisaKasMurni), color: '#3b82f6', sliced: true, selected: true }
+                ]
+            }]
+        });
+    }
 
         function populateBudgetKategoriSelect() {
             const select = document.getElementById('budgetKategori');
