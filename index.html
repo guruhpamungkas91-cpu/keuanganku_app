@@ -1106,25 +1106,42 @@ let recurrings = JSON.parse(localStorage.getItem('keuanganku_recurrings')) || [
         // HELPER UPDATE UI KARTU (TAB 1 & TAB 2)
         // ==========================================
         function updateCardUI(data) {
-            const fmt = (val) => typeof formatRp === 'function' ? formatRp(val) : `Rp ${Number(val || 0).toLocaleString('id-ID')}`;
+    const fmt = (val) => typeof formatRp === 'function' ? formatRp(val) : `Rp ${Number(val || 0).toLocaleString('id-ID')}`;
 
-        // Update Kartu Utama Tab 1 (Transaksi)
-            const elIncome = document.getElementById('pemasukanBulanIni') || document.getElementById('totalIncome');
-            const elExpense = document.getElementById('pengeluaranBulanIni') || document.getElementById('totalExpense');
-            const elNet = document.getElementById('summaryNet') || document.getElementById('sisaKas');
+    // 🟢 1. UPDATE KARTU UTAMA TAB 1 (Melengkapi ID: sisaKasBulanIni & summarySisaKas)
+    const elIncome = document.getElementById('pemasukanBulanIni') || document.getElementById('totalIncome') || document.getElementById('summaryIncome');
+    const elExpense = document.getElementById('pengeluaranBulanIni') || document.getElementById('totalExpense') || document.getElementById('summaryExpense');
+    
+    // Cari semua ID yang mungkin dipakai untuk kartu Sisa Kas
+    const elNet = document.getElementById('sisaKasBulanIni') || 
+                  document.getElementById('summarySisaKas') || 
+                  document.getElementById('summaryNetSaldo') || 
+                  document.getElementById('summaryNet') || 
+                  document.getElementById('sisaKas');
 
-        if (elIncome) elIncome.textContent = fmt(data.incomeTotal);
-        if (elExpense) elExpense.textContent = fmt(data.expenseTotal);
-        if (elNet) elNet.textContent = fmt(data.sisaKasMurni); // Menggunakan sisaKasMurni
+    if (elIncome) elIncome.textContent = fmt(data.incomeTotal);
+    if (elExpense) elExpense.textContent = fmt(data.expenseTotal);
+    
+    if (elNet) {
+        // Gunakan sisaKasMurni agar angka di Tab 1 murni bulan ini
+        elNet.textContent = fmt(data.sisaKasMurni); 
+        
+        // Ubah warna teks otomatis (Emerald jika positif/0, Rose jika minus)
+        if (data.sisaKasMurni < 0) {
+            elNet.className = "text-xl font-bold font-mono text-rose-500";
+        } else {
+            elNet.className = "text-xl font-bold font-mono text-blue-500"; // Sesuaikan warna tema
+        }
+    }
 
-        // 🟢 TAB 2: LAPORAN BULANAN (Termasuk Akumulasi Saldo Bulan Lalu)
-            const lap1 = document.getElementById('laporanTotalIncome');
-            const lap2 = document.getElementById('laporanTotalExpense');
-            const lap3 = document.getElementById('laporanNetSavings'); // Card Sisa Kas Tab Laporan
+    // 🟢 2. TAB 2: LAPORAN BULANAN
+    const lap1 = document.getElementById('laporanTotalIncome');
+    const lap2 = document.getElementById('laporanTotalExpense');
+    const lap3 = document.getElementById('laporanNetSavings');
 
-        if (lap1) lap1.textContent = fmt(data.incomeTotal);
-        if (lap2) lap2.textContent = fmt(data.expenseTotal);
-        if (lap3) lap3.textContent = fmt(data.sisaKasAkumulasi); // 👈 Memakai Akumulasi Kumulatif
+    if (lap1) lap1.textContent = fmt(data.incomeTotal);
+    if (lap2) lap2.textContent = fmt(data.expenseTotal);
+    if (lap3) lap3.textContent = fmt(data.sisaKasAkumulasi); 
 }
 
         function showToast(msg, type = 'success') {
@@ -1310,65 +1327,75 @@ let recurrings = JSON.parse(localStorage.getItem('keuanganku_recurrings')) || [
 // FUNGSI UTAMA: RENDER SUMMARY LAPORAN
 // ==========================================
         function renderSummary() {
-        // Logika menghitung ringkasan pemasukan, pengeluaran, dan sisa kas
-        // A. Ambil Saldo Awal dari Bulan Lalu
-            const saldoAwal = getSaldoAwalBulan(selectedPeriod);
+    // 1. Ambil Saldo Awal (Pastikan jika tidak valid/NaN, bernilai 0)
+    let saldoAwal = typeof getSaldoAwalBulan === 'function' ? getSaldoAwalBulan(selectedPeriod) : 0;
+    if (isNaN(saldoAwal)) saldoAwal = 0;
 
-        // B. Ambil Transaksi Bulan Ini
-        if (!Array.isArray(transactions)) transactions = [];
-            const currentTxs = transactions.filter(t => t && t.tanggal && String(t.tanggal).startsWith(selectedPeriod || ''));
+    if (!Array.isArray(transactions)) transactions = [];
 
-        let incomeBulanIni = 0;
-        let expenseBulanIni = 0;
+    // 2. Filter transaksi hanya untuk bulan terpilih (selectedPeriod)
+    const currentTxs = transactions.filter(t => t && matchPeriod(t.tanggal, selectedPeriod));
 
-        currentTxs.forEach(t => {
-            const nominal = parseFloat(t.nominal) || 0;
-        if (t.jenis === 'Pemasukan' || t.jenis === 'Transfer In') {
-            // Transfer In atau Pemasukan murni bisa dianggap dana masuk/income (opsional, atau biarkan khusus Pemasukan)
-            if (t.jenis === 'Pemasukan') {
+    let incomeBulanIni = 0;
+    let expenseBulanIni = 0;
+
+    currentTxs.forEach(t => {
+        const nominal = parseFloat(t.nominal) || 0;
+        const jenis = String(t.jenis || '').trim();
+
+        // Pemasukan
+        if (typeof isJenisPemasukan === 'function' ? isJenisPemasukan(jenis) : (jenis === 'Pemasukan' || jenis === 'Pemasukkan')) {
+            if (!jenis.toLowerCase().includes('transfer')) {
                 incomeBulanIni += nominal;
             }
-        } else if (t.jenis === 'Pengeluaran Harian' || t.jenis === 'Pengeluaran Tetap' || t.jenis === 'Pengeluaran Lainnya') {
-            // HANYA hitung pengeluaran murni
+        } 
+        // Pengeluaran
+        else if (jenis.toLowerCase().includes('keluar') || jenis.startsWith('Pengeluaran')) {
             expenseBulanIni += nominal;
         }
-        // Catatan: jenis "Transfer Out" sengaja dilewati (diabaikan) agar tidak merusak rekap pengeluaran bulanan!
     });
 
-    // C. Hitung Kas
+    // 3. Hitung Sisa Kas Murni Bulan Ini (Pemasukan - Pengeluaran)
+    // Jika ingin menyertakan Saldo Awal, gunakan: (saldoAwal + incomeBulanIni) - expenseBulanIni
+    const sisaKasMurni = incomeBulanIni - expenseBulanIni;
     const totalDanaTersedia = saldoAwal + incomeBulanIni;
     const sisaKasSekarang = totalDanaTersedia - expenseBulanIni;
 
-    // D. Safe Update Helper ke DOM (Biar gak error kalau ID gak ditemukan)
+    // Helper untuk update text HTML
     const setElementText = (id, text) => {
         const el = document.getElementById(id);
         if (el) el.textContent = text;
     };
 
-    const formatFunc = typeof formatRp === 'function' ? formatRp : (val) => 'Rp ' + Number(val).toLocaleString('id-ID');
+    const formatFunc = typeof formatRp === 'function' ? formatRp : (val) => 'Rp ' + Number(val || 0).toLocaleString('id-ID');
 
-    // E. Render Ringkasan Angka
+    // 4. Update Tampilan Teks UI
     setElementText('summarySaldoAwal', formatFunc(saldoAwal));
     setElementText('summaryIncome', formatFunc(incomeBulanIni));
+    setElementText('pemasukanBulanIni', formatFunc(incomeBulanIni));
     setElementText('summaryExpense', formatFunc(expenseBulanIni));
+    setElementText('pengeluaranBulanIni', formatFunc(expenseBulanIni));
     setElementText('summaryDanaTersedia', formatFunc(totalDanaTersedia));
 
-    // Render Net/Sisa Kas Akhir (dengan warna fleksibel)
-    const elNet = document.getElementById('summaryNetSaldo') || document.getElementById('summarySisaKas');
+    // Update Elemen Sisa Kas Bulanan
+    const elNet = document.getElementById('summaryNetSaldo') || document.getElementById('summarySisaKas') || document.getElementById('sisaKasBulanIni');
     if (elNet) {
-        elNet.textContent = formatFunc(sisaKasSekarang);
-        if (sisaKasSekarang >= 0) {
-            elNet.className = "text-emerald-400 font-bold font-mono text-xl";
-        } else {
-            elNet.className = "text-rose-500 font-bold font-mono text-xl";
-        }
+        // Tampilkan sisa kas murni bulan ini agar tidak minus karena dampak akumulasi saldo awal yang tidak valid
+        const finalSisa = sisaKasMurni; 
+        elNet.textContent = formatFunc(finalSisa);
+        elNet.className = finalSisa >= 0 
+            ? "text-emerald-400 font-bold font-mono text-xl" 
+            : "text-rose-500 font-bold font-mono text-xl";
     }
 
-    // F. Optional: Render Chart Ringkasan (Bila Ada)
+    // 5. Update Chart Pie agar Sinkron dan Memiliki Sisa Kas
     if (typeof renderSummaryChart === 'function') {
-        renderSummaryChart(incomeBulanIni, expenseBulanIni, saldoAwal);
+        renderSummaryChart(incomeBulanIni, expenseBulanIni, sisaKasMurni);
+    } else if (typeof renderPropotionChart === 'function') {
+        renderPropotionChart(incomeBulanIni, expenseBulanIni, sisaKasMurni);
     }
 }
+
         function renderAll() {
     if (typeof renderTransactions === 'function') renderTransactions();
     if (typeof renderFinancialTrendChart === 'function') renderFinancialTrendChart();
@@ -2161,30 +2188,29 @@ let myFinancialChart = null; // Variabel penyimpan instance chart biar bisa di-d
     const targetPeriod = (typeof selectedPeriod !== 'undefined' && selectedPeriod) ? String(selectedPeriod).trim() : '';
 
     const currentTxs = (typeof transactions !== 'undefined' && Array.isArray(transactions)) ? transactions.filter(t => {
-    if (!t || !t.tanggal) return false;
-    
-    // Pakai penanganan string murni tanpa new Date()
-    const rawDate = String(t.tanggal).trim().replace(/[/.]/g, '-');
-    const target = String(selectedPeriod).trim(); // contoh: "2026-07"
+        if (!t || !t.tanggal) return false;
+        
+        // Pembersihan & Normalisasi String Tanggal
+        const rawDate = String(t.tanggal).trim().replace(/[/.]/g, '-');
+        
+        // Match 1: YYYY-MM-DD langsung berawalan targetPeriod (misal "2026-07")
+        if (rawDate.startsWith(targetPeriod)) return true;
 
-    // YYYY-MM-DD
-    if (rawDate.startsWith(target)) return true;
-
-    // DD-MM-YYYY
-    const parts = rawDate.split('-');
-    if (parts.length === 3) {
-        let yyyy = '', mm = '';
-        if (parts[2].length === 4) {
-            yyyy = parts[2];
-            mm = parts[1].padStart(2, '0');
-        } else if (parts[0].length === 4) {
-            yyyy = parts[0];
-            mm = parts[1].padStart(2, '0');
+        // Match 2: Parsing DD-MM-YYYY atau YYYY-MM-DD
+        const parts = rawDate.split('-');
+        if (parts.length === 3) {
+            let yyyy = '', mm = '';
+            if (parts[2].length === 4) { // Format DD-MM-YYYY
+                yyyy = parts[2];
+                mm = parts[1].padStart(2, '0');
+            } else if (parts[0].length === 4) { // Format YYYY-MM-DD
+                yyyy = parts[0];
+                mm = parts[1].padStart(2, '0');
+            }
+            return `${yyyy}-${mm}` === targetPeriod;
         }
-        return `${yyyy}-${mm}` === target;
-    }
-    return false;
-}) : [];
+        return false;
+    }) : [];
 
     let incomeTotal = 0;
     let expTetapTotal = 0;
@@ -2202,7 +2228,7 @@ let myFinancialChart = null; // Variabel penyimpan instance chart biar bisa di-d
             return;
         }
 
-        // 🟢 Pengecekan Jenis Transaksi yang Lebih Komprehensif
+        // Pengecekan Jenis Transaksi
         if (jenis.includes('pemasukan') || jenis.includes('pemasukkan') || jenis.includes('income')) {
             incomeTotal += nominal;
         } else if (jenis.includes('tetap')) {
@@ -2212,15 +2238,18 @@ let myFinancialChart = null; // Variabel penyimpan instance chart biar bisa di-d
         } else if (jenis.includes('lain')) {
             expLainTotal += nominal;
         } else if (jenis.includes('pengeluaran') || jenis.includes('expense') || jenis.includes('out')) {
-            // 🟢 Menangkap transaksi yang jenisnya hanya "Pengeluaran" tanpa embel-embel harian/tetap
             expHarianTotal += nominal; 
         }
     });
 
     const expenseTotal = expTetapTotal + expHarianTotal + expLainTotal;
+    
+    // 🟢 Sisa Kas Murni Bulan Ini (Pemasukan - Pengeluaran)
     const sisaKasMurni = incomeTotal - expenseTotal;
 
-    const saldoAwal = typeof getSaldoAwalBulan === 'function' ? getSaldoAwalBulan(targetPeriod) : 0;
+    let saldoAwal = typeof getSaldoAwalBulan === 'function' ? getSaldoAwalBulan(targetPeriod) : 0;
+    if (isNaN(saldoAwal)) saldoAwal = 0;
+
     const sisaKasAkumulasi = (saldoAwal + incomeTotal) - expenseTotal;
 
     return {
@@ -2243,13 +2272,30 @@ let myFinancialChart = null; // Variabel penyimpan instance chart biar bisa di-d
     const container = document.getElementById('financialTrendChart');
     if (!container) return;
 
-    // 1. Ambil data dari kalkulator terpusat
+    // 1. Ambil data kalkulasi terpusat
     const data = calculateFinancials();
 
     // 2. Update Kartu UI Atas
-    updateCardUI(data);
+    if (typeof updateCardUI === 'function') updateCardUI(data);
 
-    // 3. Render Highcharts 3D Pie Chart
+    // 3. Persiapkan Data Series Pie Chart
+    const income = Number(data.incomeTotal || 0);
+    const expense = Number(data.expenseTotal || 0);
+    const sisaKas = income - expense; // Hitung Sisa Kas Murni
+
+    let seriesData = [
+        { name: 'Pengeluaran', y: expense, color: '#f43f5e', sliced: true, selected: true }
+    ];
+
+    // Jika ada Sisa Kas (Positif), tampilkan potongan Sisa Kas (Tabungan)
+    if (sisaKas > 0) {
+        seriesData.push({ name: 'Sisa Kas (Tabungan)', y: sisaKas, color: '#3b82f6' });
+    } else {
+        // Jika Pengeluaran melebihi Pemasukan, tampilkan total Pemasukan
+        seriesData.push({ name: 'Pemasukan', y: income, color: '#10b981' });
+    }
+
+    // 4. Render Highcharts 3D Pie Chart
     Highcharts.chart('financialTrendChart', {
         chart: {
             type: 'pie',
@@ -2287,12 +2333,7 @@ let myFinancialChart = null; // Variabel penyimpan instance chart biar bisa di-d
         },
         series: [{
             name: 'Nominal',
-            data: [
-                // 🟢 PASTIKAN PEMANGGILAN PROPERTI OBJEK SUDAH PAS
-                { name: 'Pemasukan', y: Number(data.incomeTotal || 0), color: '#10b981', sliced: true, selected: true },
-                { name: 'Pengeluaran', y: Number(data.expenseTotal || 0), color: '#f43f5e' },
-                { name: 'Sisa Kas Bulan Ini', y: Number(data.sisaKasMurni || 0), color: '#3b82f6' }
-            ]
+            data: seriesData
         }]
     });
 }
