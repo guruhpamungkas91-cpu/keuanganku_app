@@ -1106,42 +1106,25 @@ let recurrings = JSON.parse(localStorage.getItem('keuanganku_recurrings')) || [
         // HELPER UPDATE UI KARTU (TAB 1 & TAB 2)
         // ==========================================
         function updateCardUI(data) {
-    const fmt = (val) => typeof formatRp === 'function' ? formatRp(val) : `Rp ${Number(val || 0).toLocaleString('id-ID')}`;
+            const fmt = (val) => typeof formatRp === 'function' ? formatRp(val) : `Rp ${Number(val || 0).toLocaleString('id-ID')}`;
 
-    // 🟢 1. UPDATE KARTU UTAMA TAB 1 (Melengkapi ID: sisaKasBulanIni & summarySisaKas)
-    const elIncome = document.getElementById('pemasukanBulanIni') || document.getElementById('totalIncome') || document.getElementById('summaryIncome');
-    const elExpense = document.getElementById('pengeluaranBulanIni') || document.getElementById('totalExpense') || document.getElementById('summaryExpense');
-    
-    // Cari semua ID yang mungkin dipakai untuk kartu Sisa Kas
-    const elNet = document.getElementById('sisaKasBulanIni') || 
-                  document.getElementById('summarySisaKas') || 
-                  document.getElementById('summaryNetSaldo') || 
-                  document.getElementById('summaryNet') || 
-                  document.getElementById('sisaKas');
+        // Update Kartu Utama Tab 1 (Transaksi)
+            const elIncome = document.getElementById('pemasukanBulanIni') || document.getElementById('totalIncome');
+            const elExpense = document.getElementById('pengeluaranBulanIni') || document.getElementById('totalExpense');
+            const elNet = document.getElementById('summaryNet') || document.getElementById('sisaKas');
 
-    if (elIncome) elIncome.textContent = fmt(data.incomeTotal);
-    if (elExpense) elExpense.textContent = fmt(data.expenseTotal);
-    
-    if (elNet) {
-        // Gunakan sisaKasMurni agar angka di Tab 1 murni bulan ini
-        elNet.textContent = fmt(data.sisaKasMurni); 
-        
-        // Ubah warna teks otomatis (Emerald jika positif/0, Rose jika minus)
-        if (data.sisaKasMurni < 0) {
-            elNet.className = "text-xl font-bold font-mono text-rose-500";
-        } else {
-            elNet.className = "text-xl font-bold font-mono text-blue-500"; // Sesuaikan warna tema
-        }
-    }
+        if (elIncome) elIncome.textContent = fmt(data.incomeTotal);
+        if (elExpense) elExpense.textContent = fmt(data.expenseTotal);
+        if (elNet) elNet.textContent = fmt(data.sisaKasMurni); // Menggunakan sisaKasMurni
 
-    // 🟢 2. TAB 2: LAPORAN BULANAN
-    const lap1 = document.getElementById('laporanTotalIncome');
-    const lap2 = document.getElementById('laporanTotalExpense');
-    const lap3 = document.getElementById('laporanNetSavings');
+        // 🟢 TAB 2: LAPORAN BULANAN (Termasuk Akumulasi Saldo Bulan Lalu)
+            const lap1 = document.getElementById('laporanTotalIncome');
+            const lap2 = document.getElementById('laporanTotalExpense');
+            const lap3 = document.getElementById('laporanNetSavings'); // Card Sisa Kas Tab Laporan
 
-    if (lap1) lap1.textContent = fmt(data.incomeTotal);
-    if (lap2) lap2.textContent = fmt(data.expenseTotal);
-    if (lap3) lap3.textContent = fmt(data.sisaKasAkumulasi); 
+        if (lap1) lap1.textContent = fmt(data.incomeTotal);
+        if (lap2) lap2.textContent = fmt(data.expenseTotal);
+        if (lap3) lap3.textContent = fmt(data.sisaKasAkumulasi); // 👈 Memakai Akumulasi Kumulatif
 }
 
         function showToast(msg, type = 'success') {
