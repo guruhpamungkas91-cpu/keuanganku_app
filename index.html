@@ -1981,73 +1981,73 @@ if (elNet) elNet.textContent = formatRp(sisaKas);
     return String(dateStr).includes(targetPeriod);
 }
 
-    // 🟢 1. HITUNG SALDO AWAL BAWAAN BULAN LALU
-    const saldoAwal = typeof getSaldoAwalBulan === 'function' ? getSaldoAwalBulan(selectedPeriod) : 0;
+// 🟢 1. HITUNG SALDO AWAL BAWAAN BULAN LALU
+const saldoAwal = typeof getSaldoAwalBulan === 'function' ? getSaldoAwalBulan(selectedPeriod) : 0;
 
-    const currentTxs = transactions.filter(t => t.tanggal && String(t.tanggal).startsWith(selectedPeriod));
+// 🟢 2. GUNAKAN FUNGSI isSameMonthAndYear UNTUK FILTER TRANSAKSI BULAN INI
+const currentTxs = transactions.filter(t => isSameMonthAndYear(t.tanggal, selectedPeriod));
+
+let incomeTotal = 0;
+let expTetapTotal = 0;
+let expHarianTotal = 0;
+let expLainTotal = 0;
+
+const expCategories = {};
+
+// 🟢 3. HITUNG BERDASARKAN JENIS TRANSAKSI SECARA SPESIFIK
+currentTxs.forEach(t => {
+    const nominal = parseFloat(t.nominal) || 0;
+    const jenis = String(t.jenis || '').trim();
     
-   let incomeTotal = 0;
-    let expTetapTotal = 0;
-    let expHarianTotal = 0;
-    let expLainTotal = 0;
+    if (jenis === "Pemasukan") {
+        incomeTotal += nominal;
+    } else if (jenis === "Pengeluaran Tetap") {
+        expTetapTotal += nominal;
+        if (t.kategori) expCategories[t.kategori] = (expCategories[t.kategori] || 0) + nominal;
+    } else if (jenis === "Pengeluaran Harian") {
+        expHarianTotal += nominal;
+        if (t.kategori) expCategories[t.kategori] = (expCategories[t.kategori] || 0) + nominal;
+    } else if (jenis === "Pengeluaran Lainnya") {
+        expLainTotal += nominal;
+        if (t.kategori) expCategories[t.kategori] = (expCategories[t.kategori] || 0) + nominal;
+    }
+});
 
-    const expCategories = {};
+// 🟢 Total Pengeluaran gabungan seluruh pengeluaran murni
+const totalExpense = expTetapTotal + expHarianTotal + expLainTotal;
 
-    // 🟢 HITUNG BERDASARKAN JENIS TRANSAKSI SECARA SPESIFIK
-    currentTxs.forEach(t => {
-        const nominal = parseFloat(t.nominal) || 0;
-        const jenis = String(t.jenis || '').trim();
-        
-        if (jenis === "Pemasukan") {
-            incomeTotal += nominal;
-        } else if (jenis === "Pengeluaran Tetap") {
-            expTetapTotal += nominal;
-            if (t.kategori) expCategories[t.kategori] = (expCategories[t.kategori] || 0) + nominal;
-        } else if (jenis === "Pengeluaran Harian") {
-            expHarianTotal += nominal; // 🟢 Murni Pengeluaran Harian saja
-            if (t.kategori) expCategories[t.kategori] = (expCategories[t.kategori] || 0) + nominal;
-        } else if (jenis === "Pengeluaran Lainnya") {
-            expLainTotal += nominal; // 🟢 Murni Pengeluaran Lainnya saja
-            if (t.kategori) expCategories[t.kategori] = (expCategories[t.kategori] || 0) + nominal;
-        }
-    });
+// 🟢 DANA TERSEDIA = Saldo Awal Bulan Lalu + Pemasukan Bulan Ini
+const totalDanaTersedia = saldoAwal + incomeTotal;
 
-    // 🟢 Total Pengeluaran gabungan seluruh pengeluaran murni
-    const totalExpense = expTetapTotal + expHarianTotal + expLainTotal;
-    
-    // 🟢 DANA TERSEDIA = Saldo Awal Bulan Lalu + Pemasukan Bulan Ini
-    const totalDanaTersedia = saldoAwal + incomeTotal;
-    
-    // 🟢 SISA TABUNGAN REAL KAS
-    const netSavings = totalDanaTersedia - totalExpense;
+// 🟢 SISA TABUNGAN REAL KAS (AKUMULASI SALDO AKHIR)
+const netSavings = totalDanaTersedia - totalExpense;
 
-    // 🟢 UPDATE DISPLAY UI
-    if (document.getElementById('laporanTotalIncome')) document.getElementById('laporanTotalIncome').textContent = formatRp(incomeTotal);
-    if (document.getElementById('laporanExpenseTetap')) document.getElementById('laporanExpenseTetap').textContent = formatRp(expTetapTotal);
-    if (document.getElementById('laporanTotalExpense')) document.getElementById('laporanTotalExpense').textContent = formatRp(totalExpense);
+// 🟢 UPDATE DISPLAY UI
+if (document.getElementById('laporanTotalIncome')) document.getElementById('laporanTotalIncome').textContent = formatRp(incomeTotal);
+if (document.getElementById('laporanExpenseTetap')) document.getElementById('laporanExpenseTetap').textContent = formatRp(expTetapTotal);
+if (document.getElementById('laporanTotalExpense')) document.getElementById('laporanTotalExpense').textContent = formatRp(totalExpense);
 
-    // 🟢 Tampilkan nilai murni Pengeluaran Harian (tidak digabung lagi)
-    const elHarian = document.getElementById('laporanExpenseHarian');
-    if (elHarian) elHarian.textContent = formatRp(expHarianTotal);
+const elHarian = document.getElementById('laporanExpenseHarian');
+if (elHarian) elHarian.textContent = formatRp(expHarianTotal);
 
-    // 🟢 Tampilkan Pengeluaran Lainnya jika elemennya ada
-    const elLain = document.getElementById('laporanExpenseLain');
-    if (elLain) elLain.textContent = formatRp(expLainTotal);
+const elLain = document.getElementById('laporanExpenseLain');
+if (elLain) elLain.textContent = formatRp(expLainTotal);
 
-    if (document.getElementById('laporanNetSavings')) document.getElementById('laporanNetSavings').textContent = formatRp(netSavings);
-    if (document.getElementById('laporanPeriodLabel1')) document.getElementById('laporanPeriodLabel1').textContent = `Bulan ${selectedPeriod}`;
+if (document.getElementById('laporanNetSavings')) document.getElementById('laporanNetSavings').textContent = formatRp(netSavings);
+if (document.getElementById('laporanPeriodLabel1')) document.getElementById('laporanPeriodLabel1').textContent = `Bulan ${selectedPeriod}`;
 
-    // 🟢 4. PENILAIAN FINANSIAL BERDASARKAN DANA TERSEDIA
-    const savingsRatio = totalDanaTersedia > 0 ? Math.round((netSavings / totalDanaTersedia) * 100) : (netSavings < 0 ? -100 : 0);
-    const badgeEl = document.getElementById('healthStatusBadge');
-    const descEl = document.getElementById('healthStatusDesc');
-    const ratioValEl = document.getElementById('savingsRatioVal');
-    const ratioBarEl = document.getElementById('savingsRatioBar');
+// 🟢 4. PENILAIAN FINANSIAL BERDASARKAN DANA TERSEDIA
+const savingsRatio = totalDanaTersedia > 0 ? Math.round((netSavings / totalDanaTersedia) * 100) : (netSavings < 0 ? -100 : 0);
+const badgeEl = document.getElementById('healthStatusBadge');
+const descEl = document.getElementById('healthStatusDesc');
+const ratioValEl = document.getElementById('savingsRatioVal');
+const ratioBarEl = document.getElementById('savingsRatioBar');
 
-    ratioValEl.textContent = `${savingsRatio}%`;
-    const clampedWidth = Math.max(0, Math.min(100, savingsRatio));
-    ratioBarEl.style.width = `${clampedWidth}%`;
+if (ratioValEl) ratioValEl.textContent = `${savingsRatio}%`;
+const clampedWidth = Math.max(0, Math.min(100, savingsRatio));
+if (ratioBarEl) ratioBarEl.style.width = `${clampedWidth}%`;
 
+if (badgeEl && descEl && ratioBarEl) {
     if (netSavings < 0) {
         badgeEl.textContent = "Bahaya / Defisit";
         badgeEl.className = "text-rose-500 font-extrabold";
@@ -2069,82 +2069,85 @@ if (elNet) elNet.textContent = formatRp(sisaKas);
         descEl.textContent = "Hati-hati, alokasi sisa kas tipis. Kurangi pengeluaran harian yang tidak perlu.";
         ratioBarEl.className = "bg-amber-500 h-2.5 rounded-full transition-all duration-500";
     }
+}
 
-    const chartTextColor = typeof getChartTextColor === 'function' ? getChartTextColor() : '#9ca3af';
-    const chartGridColor = typeof getChartGridColor === 'function' ? getChartGridColor() : 'rgba(255,255,255,0.1)';
+const chartTextColor = typeof getChartTextColor === 'function' ? getChartTextColor() : '#9ca3af';
+const chartGridColor = typeof getChartGridColor === 'function' ? getChartGridColor() : 'rgba(255,255,255,0.1)';
 
-    // 🟢 5. UPDATE BAR CHART (TOTAL DANA TERSEDIA VS PENGELUARAN)
-    const ctx1 = document.getElementById('chartIncomeExpense')?.getContext('2d');
-    if (ctx1) {
-        if (typeof chartIncExp !== 'undefined' && chartIncExp) chartIncExp.destroy();
-        chartIncExp = new Chart(ctx1, {
-            type: 'bar',
-            data: {
-                labels: ['Total Dana Kas', 'Pengeluaran'],
-                datasets: [{
-                    label: 'Nominal (Rp)',
-                    data: [totalDanaTersedia, totalExpense],
-                    backgroundColor: ['#10b981', '#ef4444'],
-                    borderRadius: 8
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: { ticks: { color: chartTextColor }, grid: { display: false } },
-                    y: { ticks: { color: chartTextColor }, grid: { color: chartGridColor } }
-                }
+// 🟢 5. UPDATE BAR CHART (PEMASUKAN BULAN INI VS PENGELUARAN BULAN INI)
+const ctx1 = document.getElementById('chartIncomeExpense')?.getContext('2d');
+if (ctx1) {
+    if (typeof chartIncExp !== 'undefined' && chartIncExp) chartIncExp.destroy();
+    chartIncExp = new Chart(ctx1, {
+        type: 'bar',
+        data: {
+            labels: ['Pemasukan', 'Pengeluaran'],
+            datasets: [{
+                label: 'Nominal (Rp)',
+                data: [incomeTotal, totalExpense],
+                backgroundColor: ['#10b981', '#ef4444'],
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { ticks: { color: chartTextColor }, grid: { display: false } },
+                y: { ticks: { color: chartTextColor }, grid: { color: chartGridColor } }
             }
-        });
-    }
-
-    const ctx2 = document.getElementById('chartProporsi')?.getContext('2d');
-    if (ctx2) {
-        if (typeof chartProp !== 'undefined' && chartProp) chartProp.destroy();
-
-        const labels = Object.keys(expCategories);
-        const dataVals = Object.values(expCategories);
-        const colors = ['#f43f5e', '#3b82f6', '#8b5cf6', '#f59e0b', '#10b981', '#06b6d4', '#ec4899', '#6366f1'];
-
-        chartProp = new Chart(ctx2, {
-            type: 'doughnut',
-            data: {
-                labels: labels.length ? labels : ['Belum Ada Pengeluaran'],
-                datasets: [{
-                    data: dataVals.length ? dataVals : [1],
-                    backgroundColor: dataVals.length ? colors.slice(0, labels.length) : ['#9ca3af']
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, color: chartTextColor } } }
-            }
-        });
-    }
-
-    const breakdownContainer = document.getElementById('laporanKategoriBreakdown');
-    if (breakdownContainer) {
-        breakdownContainer.innerHTML = '';
-        if (Object.keys(expCategories).length === 0) {
-            breakdownContainer.innerHTML = '<p class="text-gray-400 col-span-3 text-center py-4">Belum ada rincian pengeluaran di bulan ini.</p>';
-        } else {
-            Object.entries(expCategories).forEach(([kat, total]) => {
-                const pct = totalExpense > 0 ? ((total / totalExpense) * 100).toFixed(1) : 0;
-                breakdownContainer.innerHTML += `
-                    <div class="card-custom p-3 rounded-xl flex items-center justify-between border border-gray-800">
-                        <div>
-                            <span class="font-bold text-gray-200 block">${kat}</span>
-                            <span class="text-[10px] text-gray-400">${pct}% dari total pengeluaran</span>
-                        </div>
-                        <span class="font-mono font-bold text-rose-500">${formatRp(total)}</span>
-                    </div>
-                `;
-            });
         }
+    });
+}
+
+// 🟢 6. UPDATE DONUT CHART (PROPORSI PENGELUARAN PER KATEGORI)
+const ctx2 = document.getElementById('chartProporsi')?.getContext('2d');
+if (ctx2) {
+    if (typeof chartProp !== 'undefined' && chartProp) chartProp.destroy();
+
+    const labels = Object.keys(expCategories);
+    const dataVals = Object.values(expCategories);
+    const colors = ['#f43f5e', '#3b82f6', '#8b5cf6', '#f59e0b', '#10b981', '#06b6d4', '#ec4899', '#6366f1'];
+
+    chartProp = new Chart(ctx2, {
+        type: 'doughnut',
+        data: {
+            labels: labels.length ? labels : ['Belum Ada Pengeluaran'],
+            datasets: [{
+                data: dataVals.length ? dataVals : [1],
+                backgroundColor: dataVals.length ? colors.slice(0, labels.length) : ['#9ca3af']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, color: chartTextColor } } }
+        }
+    });
+}
+
+// 🟢 7. BREAKDOWN KATEGORI
+const breakdownContainer = document.getElementById('laporanKategoriBreakdown');
+if (breakdownContainer) {
+    breakdownContainer.innerHTML = '';
+    if (Object.keys(expCategories).length === 0) {
+        breakdownContainer.innerHTML = '<p class="text-gray-400 col-span-3 text-center py-4">Belum ada rincian pengeluaran di bulan ini.</p>';
+    } else {
+        Object.entries(expCategories).forEach(([kat, total]) => {
+            const pct = totalExpense > 0 ? ((total / totalExpense) * 100).toFixed(1) : 0;
+            breakdownContainer.innerHTML += `
+                <div class="card-custom p-3 rounded-xl flex items-center justify-between border border-gray-800">
+                    <div>
+                        <span class="font-bold text-gray-200 block">${kat}</span>
+                        <span class="text-[10px] text-gray-400">${pct}% dari total pengeluaran</span>
+                    </div>
+                    <span class="font-mono font-bold text-rose-500">${formatRp(total)}</span>
+                </div>
+            `;
+        });
     }
+}
 }
 let myFinancialChart = null; // Variabel penyimpan instance chart biar bisa di-destroy ulang
 
