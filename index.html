@@ -1295,7 +1295,7 @@ let recurrings = JSON.parse(localStorage.getItem('keuanganku_recurrings')) || [
 
         // Hitung total pemasukan & pengeluaran masa lalu
             const totalIncomePrev = prevTxs
-            .filter(t => t.jenis === 'Pemasukkan')
+            .filter(t => t.jenis === 'Pemasukan')
             .reduce((sum, t) => sum + (parseFloat(t.nominal) || 0), 0);
 
             const totalExpensePrev = prevTxs
