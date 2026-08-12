@@ -1310,75 +1310,65 @@ let recurrings = JSON.parse(localStorage.getItem('keuanganku_recurrings')) || [
 // FUNGSI UTAMA: RENDER SUMMARY LAPORAN
 // ==========================================
         function renderSummary() {
-    // 1. Ambil Saldo Awal (Pastikan jika tidak valid/NaN, bernilai 0)
-    let saldoAwal = typeof getSaldoAwalBulan === 'function' ? getSaldoAwalBulan(selectedPeriod) : 0;
-    if (isNaN(saldoAwal)) saldoAwal = 0;
+        // Logika menghitung ringkasan pemasukan, pengeluaran, dan sisa kas
+        // A. Ambil Saldo Awal dari Bulan Lalu
+            const saldoAwal = getSaldoAwalBulan(selectedPeriod);
 
-    if (!Array.isArray(transactions)) transactions = [];
+        // B. Ambil Transaksi Bulan Ini
+        if (!Array.isArray(transactions)) transactions = [];
+            const currentTxs = transactions.filter(t => t && t.tanggal && String(t.tanggal).startsWith(selectedPeriod || ''));
 
-    // 2. Filter transaksi hanya untuk bulan terpilih (selectedPeriod)
-    const currentTxs = transactions.filter(t => t && matchPeriod(t.tanggal, selectedPeriod));
+        let incomeBulanIni = 0;
+        let expenseBulanIni = 0;
 
-    let incomeBulanIni = 0;
-    let expenseBulanIni = 0;
-
-    currentTxs.forEach(t => {
-        const nominal = parseFloat(t.nominal) || 0;
-        const jenis = String(t.jenis || '').trim();
-
-        // Pemasukan
-        if (typeof isJenisPemasukan === 'function' ? isJenisPemasukan(jenis) : (jenis === 'Pemasukan' || jenis === 'Pemasukkan')) {
-            if (!jenis.toLowerCase().includes('transfer')) {
+        currentTxs.forEach(t => {
+            const nominal = parseFloat(t.nominal) || 0;
+        if (t.jenis === 'Pemasukan' || t.jenis === 'Transfer In') {
+            // Transfer In atau Pemasukan murni bisa dianggap dana masuk/income (opsional, atau biarkan khusus Pemasukan)
+            if (t.jenis === 'Pemasukan') {
                 incomeBulanIni += nominal;
             }
-        } 
-        // Pengeluaran
-        else if (jenis.toLowerCase().includes('keluar') || jenis.startsWith('Pengeluaran')) {
+        } else if (t.jenis === 'Pengeluaran Harian' || t.jenis === 'Pengeluaran Tetap' || t.jenis === 'Pengeluaran Lainnya') {
+            // HANYA hitung pengeluaran murni
             expenseBulanIni += nominal;
         }
+        // Catatan: jenis "Transfer Out" sengaja dilewati (diabaikan) agar tidak merusak rekap pengeluaran bulanan!
     });
 
-    // 3. Hitung Sisa Kas Murni Bulan Ini (Pemasukan - Pengeluaran)
-    // Jika ingin menyertakan Saldo Awal, gunakan: (saldoAwal + incomeBulanIni) - expenseBulanIni
-    const sisaKasMurni = incomeBulanIni - expenseBulanIni;
+    // C. Hitung Kas
     const totalDanaTersedia = saldoAwal + incomeBulanIni;
     const sisaKasSekarang = totalDanaTersedia - expenseBulanIni;
 
-    // Helper untuk update text HTML
+    // D. Safe Update Helper ke DOM (Biar gak error kalau ID gak ditemukan)
     const setElementText = (id, text) => {
         const el = document.getElementById(id);
         if (el) el.textContent = text;
     };
 
-    const formatFunc = typeof formatRp === 'function' ? formatRp : (val) => 'Rp ' + Number(val || 0).toLocaleString('id-ID');
+    const formatFunc = typeof formatRp === 'function' ? formatRp : (val) => 'Rp ' + Number(val).toLocaleString('id-ID');
 
-    // 4. Update Tampilan Teks UI
+    // E. Render Ringkasan Angka
     setElementText('summarySaldoAwal', formatFunc(saldoAwal));
     setElementText('summaryIncome', formatFunc(incomeBulanIni));
-    setElementText('pemasukanBulanIni', formatFunc(incomeBulanIni));
     setElementText('summaryExpense', formatFunc(expenseBulanIni));
-    setElementText('pengeluaranBulanIni', formatFunc(expenseBulanIni));
     setElementText('summaryDanaTersedia', formatFunc(totalDanaTersedia));
 
-    // Update Elemen Sisa Kas Bulanan
-    const elNet = document.getElementById('summaryNetSaldo') || document.getElementById('summarySisaKas') || document.getElementById('sisaKasBulanIni');
+    // Render Net/Sisa Kas Akhir (dengan warna fleksibel)
+    const elNet = document.getElementById('summaryNetSaldo') || document.getElementById('summarySisaKas');
     if (elNet) {
-        // Tampilkan sisa kas murni bulan ini agar tidak minus karena dampak akumulasi saldo awal yang tidak valid
-        const finalSisa = sisaKasMurni; 
-        elNet.textContent = formatFunc(finalSisa);
-        elNet.className = finalSisa >= 0 
-            ? "text-emerald-400 font-bold font-mono text-xl" 
-            : "text-rose-500 font-bold font-mono text-xl";
+        elNet.textContent = formatFunc(sisaKasSekarang);
+        if (sisaKasSekarang >= 0) {
+            elNet.className = "text-emerald-400 font-bold font-mono text-xl";
+        } else {
+            elNet.className = "text-rose-500 font-bold font-mono text-xl";
+        }
     }
 
-    // 5. Update Chart Pie agar Sinkron dan Memiliki Sisa Kas
+    // F. Optional: Render Chart Ringkasan (Bila Ada)
     if (typeof renderSummaryChart === 'function') {
-        renderSummaryChart(incomeBulanIni, expenseBulanIni, sisaKasMurni);
-    } else if (typeof renderPropotionChart === 'function') {
-        renderPropotionChart(incomeBulanIni, expenseBulanIni, sisaKasMurni);
+        renderSummaryChart(incomeBulanIni, expenseBulanIni, saldoAwal);
     }
 }
-
         function renderAll() {
     if (typeof renderTransactions === 'function') renderTransactions();
     if (typeof renderFinancialTrendChart === 'function') renderFinancialTrendChart();
