@@ -2171,29 +2171,30 @@ let myFinancialChart = null; // Variabel penyimpan instance chart biar bisa di-d
     const targetPeriod = (typeof selectedPeriod !== 'undefined' && selectedPeriod) ? String(selectedPeriod).trim() : '';
 
     const currentTxs = (typeof transactions !== 'undefined' && Array.isArray(transactions)) ? transactions.filter(t => {
-        if (!t || !t.tanggal) return false;
-        
-        // Pembersihan & Normalisasi String Tanggal
-        const rawDate = String(t.tanggal).trim().replace(/[/.]/g, '-');
-        
-        // Match 1: YYYY-MM-DD langsung berawalan targetPeriod (misal "2026-07")
-        if (rawDate.startsWith(targetPeriod)) return true;
+    if (!t || !t.tanggal) return false;
+    
+    // Pakai penanganan string murni tanpa new Date()
+    const rawDate = String(t.tanggal).trim().replace(/[/.]/g, '-');
+    const target = String(selectedPeriod).trim(); // contoh: "2026-07"
 
-        // Match 2: Parsing DD-MM-YYYY atau YYYY-MM-DD
-        const parts = rawDate.split('-');
-        if (parts.length === 3) {
-            let yyyy = '', mm = '';
-            if (parts[2].length === 4) { // Format DD-MM-YYYY
-                yyyy = parts[2];
-                mm = parts[1].padStart(2, '0');
-            } else if (parts[0].length === 4) { // Format YYYY-MM-DD
-                yyyy = parts[0];
-                mm = parts[1].padStart(2, '0');
-            }
-            return `${yyyy}-${mm}` === targetPeriod;
+    // YYYY-MM-DD
+    if (rawDate.startsWith(target)) return true;
+
+    // DD-MM-YYYY
+    const parts = rawDate.split('-');
+    if (parts.length === 3) {
+        let yyyy = '', mm = '';
+        if (parts[2].length === 4) {
+            yyyy = parts[2];
+            mm = parts[1].padStart(2, '0');
+        } else if (parts[0].length === 4) {
+            yyyy = parts[0];
+            mm = parts[1].padStart(2, '0');
         }
-        return false;
-    }) : [];
+        return `${yyyy}-${mm}` === target;
+    }
+    return false;
+}) : [];
 
     let incomeTotal = 0;
     let expTetapTotal = 0;
@@ -2211,7 +2212,7 @@ let myFinancialChart = null; // Variabel penyimpan instance chart biar bisa di-d
             return;
         }
 
-        // Pengecekan Jenis Transaksi
+        // 🟢 Pengecekan Jenis Transaksi yang Lebih Komprehensif
         if (jenis.includes('pemasukan') || jenis.includes('pemasukkan') || jenis.includes('income')) {
             incomeTotal += nominal;
         } else if (jenis.includes('tetap')) {
@@ -2221,18 +2222,15 @@ let myFinancialChart = null; // Variabel penyimpan instance chart biar bisa di-d
         } else if (jenis.includes('lain')) {
             expLainTotal += nominal;
         } else if (jenis.includes('pengeluaran') || jenis.includes('expense') || jenis.includes('out')) {
+            // 🟢 Menangkap transaksi yang jenisnya hanya "Pengeluaran" tanpa embel-embel harian/tetap
             expHarianTotal += nominal; 
         }
     });
 
     const expenseTotal = expTetapTotal + expHarianTotal + expLainTotal;
-    
-    // 🟢 Sisa Kas Murni Bulan Ini (Pemasukan - Pengeluaran)
     const sisaKasMurni = incomeTotal - expenseTotal;
 
-    let saldoAwal = typeof getSaldoAwalBulan === 'function' ? getSaldoAwalBulan(targetPeriod) : 0;
-    if (isNaN(saldoAwal)) saldoAwal = 0;
-
+    const saldoAwal = typeof getSaldoAwalBulan === 'function' ? getSaldoAwalBulan(targetPeriod) : 0;
     const sisaKasAkumulasi = (saldoAwal + incomeTotal) - expenseTotal;
 
     return {
@@ -2255,30 +2253,13 @@ let myFinancialChart = null; // Variabel penyimpan instance chart biar bisa di-d
     const container = document.getElementById('financialTrendChart');
     if (!container) return;
 
-    // 1. Ambil data kalkulasi terpusat
+    // 1. Ambil data dari kalkulator terpusat
     const data = calculateFinancials();
 
     // 2. Update Kartu UI Atas
-    if (typeof updateCardUI === 'function') updateCardUI(data);
+    updateCardUI(data);
 
-    // 3. Persiapkan Data Series Pie Chart
-    const income = Number(data.incomeTotal || 0);
-    const expense = Number(data.expenseTotal || 0);
-    const sisaKas = income - expense; // Hitung Sisa Kas Murni
-
-    let seriesData = [
-        { name: 'Pengeluaran', y: expense, color: '#f43f5e', sliced: true, selected: true }
-    ];
-
-    // Jika ada Sisa Kas (Positif), tampilkan potongan Sisa Kas (Tabungan)
-    if (sisaKas > 0) {
-        seriesData.push({ name: 'Sisa Kas (Tabungan)', y: sisaKas, color: '#3b82f6' });
-    } else {
-        // Jika Pengeluaran melebihi Pemasukan, tampilkan total Pemasukan
-        seriesData.push({ name: 'Pemasukan', y: income, color: '#10b981' });
-    }
-
-    // 4. Render Highcharts 3D Pie Chart
+    // 3. Render Highcharts 3D Pie Chart
     Highcharts.chart('financialTrendChart', {
         chart: {
             type: 'pie',
@@ -2316,7 +2297,12 @@ let myFinancialChart = null; // Variabel penyimpan instance chart biar bisa di-d
         },
         series: [{
             name: 'Nominal',
-            data: seriesData
+            data: [
+                // 🟢 PASTIKAN PEMANGGILAN PROPERTI OBJEK SUDAH PAS
+                { name: 'Pemasukan', y: Number(data.incomeTotal || 0), color: '#10b981', sliced: true, selected: true },
+                { name: 'Pengeluaran', y: Number(data.expenseTotal || 0), color: '#f43f5e' },
+                { name: 'Sisa Kas Bulan Ini', y: Number(data.sisaKasMurni || 0), color: '#3b82f6' }
+            ]
         }]
     });
 }
