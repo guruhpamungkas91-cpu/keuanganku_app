@@ -650,14 +650,15 @@ html.dark td span.badge-kategori,
                     </div>
                 </div>
 
-                <div class="card-custom rounded-2xl p-5 shadow-xl">
-                    <h3 class="font-bold text-sm mb-1 flex items-center gap-2">
-                        <i class="fa-solid fa-chart-pie text-purple-500"></i> Proporsi Pengeluaran per Kategori
-                    </h3>
-                    <p class="text-xs text-gray-400 mb-4">Persentase mana yang menyedot pengeluaran terbanyak</p>
-                    <div class="h-64 relative flex items-center justify-center">
-                        <canvas id="chartProporsi"></canvas>
-                    </div>
+                <div class="card-custom p-5 rounded-2xl border shadow-sm space-y-2">
+                <div>
+                    <h4 class="text-xs font-bold uppercase tracking-wider opacity-90">Proporsi Pengeluaran per Kategori</h4>
+                    <p class="text-[11px] opacity-75">Persentase mana yang menyedot pengeluaran terbanyak</p>
+                </div>
+    
+                <!-- Ganti canvas/kontainer lama dengan div ini -->
+                <div id="chartProporsi3D" class="w-full h-80"></div>
+            </div>
                 </div>
             </div>
 
@@ -1387,9 +1388,77 @@ let recurrings = JSON.parse(localStorage.getItem('keuanganku_recurrings')) || [
         renderSummaryChart(incomeBulanIni, expenseBulanIni, saldoAwal);
     }
 }
+
+        function renderProporsiPengeluaran3D() {
+        // Check apakah elemen ID chartProporsi3D ada di DOM sebelum render
+        if (!document.getElementById('chartProporsi3D')) return;
+
+        // 1. Filter hanya transaksi Pengeluaran pada bulan aktif
+            const currentTxs = transactions.filter(t => 
+            t.tanggal && 
+            t.tanggal.startsWith(selectedPeriod) && 
+            (t.jenis.startsWith("Pengeluaran") || t.jenis === "Pengeluaran Harian" || t.jenis === "Pengeluaran Tetap" || t.jenis === "Pengeluaran Lainnya")
+        );
+
+        // 2. Kelompokkan total nominal berdasarkan Kategori
+            const categoryTotals = {};
+            currentTxs.forEach(t => {
+            const kat = t.kategori || 'Lainnya';
+            const nominal = parseFloat(t.nominal) || 0;
+            categoryTotals[kat] = (categoryTotals[kat] || 0) + nominal;
+        });
+
+        // Format data untuk Highcharts
+        const chartData = Object.entries(categoryTotals).map(([kategori, total]) => ({
+            name: kategori,
+            y: total
+        }));
+
+        // 3. Render Highcharts Donut 3D
+        Highcharts.chart('chartProporsi3D', {
+            chart: {
+                type: 'pie',
+                backgroundColor: 'transparent',
+                options3d: {
+                    enabled: true,
+                    alpha: 45, // Kemiringan vertikal
+                    beta: 0    // Rotasi sudut
+                }
+            },
+            title: { text: null },
+            accessibility: { enabled: false },
+            tooltip: {
+                pointFormat: '{series.name}: <b>Rp {point.y:,.0f}</b> ({point.percentage:.1f}%)'
+            },
+            plotOptions: {
+                pie: {
+                    innerSize: 100, // Ukuran lubang tengah (Donut Style)
+                    depth: 45,      // Ketebalan efek 3D
+                    allowPointSelect: true,
+                    cursor: 'pointer',
+                    dataLabels: {
+                        enabled: false // Label garis dimatikan
+                    },
+                    showInLegend: true // Tampilkan legenda warna
+                }
+            },
+            legend: {
+                itemStyle: {
+                    color: getChartTextColor(), // Disesuaikan dengan mode terang/gelap
+                    fontSize: '11px',
+                    fontWeight: 'normal'
+                }
+            },
+            series: [{
+                name: 'Total Pengeluaran',
+                data: chartData
+            }]
+        });
+    }
         function renderAll() {
     if (typeof renderTransactions === 'function') renderTransactions();
     if (typeof renderFinancialTrendChart === 'function') renderFinancialTrendChart();
+    if (typeof renderProporsiPengeluaran3D === 'function') renderProporsiPengeluaran3D();
     if (typeof renderBudgets === 'function') renderBudgets();
     if (typeof renderGoals === 'function') renderGoals();
     if (typeof renderDebts === 'function') renderDebts();
