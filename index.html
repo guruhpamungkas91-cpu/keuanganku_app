@@ -1493,9 +1493,10 @@ let recurrings = JSON.parse(localStorage.getItem('keuanganku_recurrings')) || [
 
     rowsHtml += `
         <tr class="hover:bg-white/5 transition border-b border-gray-800/40">
-            <!-- 🟢 Nomor Urut Otomatis -->
-            <td class="py-3 px-3 text-center text-gray-400 font-mono text-[11px]">${index + 1}</td>
-            <td class="py-3 px-3 whitespace-nowrap text-gray-400 font-mono text-[11px]">${displayTanggal}</td>
+            <!-- 🟢 No & Tanggal diperbesar ukurannya (text-sm & text-xs) -->
+            <td class="py-3 px-3 text-center text-gray-300 font-mono text-xs font-semibold">${index + 1}</td>
+            <td class="py-3 px-3 whitespace-nowrap text-gray-300 font-mono text-xs">${displayTanggal}</td>
+            
             <td class="py-3 px-3 font-semibold text-gray-200">${displayJudul}</td>
             <td class="py-3 px-3">
                 <span class="text-[10px] font-bold px-2 py-0.5 rounded-md ${badgeClass}" style="color: var(--wallet-text, inherit);">
@@ -1503,7 +1504,6 @@ let recurrings = JSON.parse(localStorage.getItem('keuanganku_recurrings')) || [
                 </span>
             </td>
             <td class="py-3 px-3">
-                <!-- 🟢 Class badge-kategori dipasang di sini -->
                 <span class="badge-kategori text-[10px] font-medium px-2 py-0.5 rounded-full">${displayKategori}</span>
             </td>
             <td class="py-3 px-3 text-right font-bold font-mono ${isIncome ? 'text-emerald-500' : 'text-rose-500'}">
