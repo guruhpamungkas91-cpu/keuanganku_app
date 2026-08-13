@@ -20,6 +20,21 @@
     html.dark td span[class*="bg-"] {
         color: #ffffff !important; /* Warna putih bersih mutlak untuk mode gelap */
     }
+
+    /* Otomatis atur warna teks badge kategori: dark mode & light mode */
+html:not(.dark) td span.badge-kategori,
+:root[data-theme^="light"] td span.badge-kategori {
+    color: #0f172a !important; /* Warna gelap tegas untuk Mode Cerah */
+    background-color: rgba(0, 0, 0, 0.06) !important;
+    border: 1px solid rgba(0, 0, 0, 0.15) !important;
+}
+
+html.dark td span.badge-kategori,
+:root[data-theme^="dark"] td span.badge-kategori {
+    color: #f1f5f9 !important; /* Warna terang bersih untuk Mode Gelap */
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
 </style>
 
     
