@@ -495,15 +495,18 @@ html.dark td span.badge-kategori,
         <div id="transactionListContainer" class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
-                    <tr class="text-[11px] font-semibold text-gray-400 uppercase border-b border-gray-800/80">
-                        <th class="py-2 px-3">Tanggal</th>
-                        <th class="py-2 px-3">Judul</th>
-                        <th class="py-2 px-3">Dompet</th>
-                        <th class="py-2 px-3">Kategori</th>
-                        <th class="py-2 px-3 text-right">Nominal</th>
-                        <th class="py-2 px-2 text-center no-print">Aksi</th>
-                    </tr>
-                </thead>
+                    <thead>
+                <tr class="text-[11px] font-semibold text-gray-400 uppercase border-b border-gray-800/80">
+                    <th class="py-2 px-3 text-center">No</th> <!-- 🟢 Tambahkan Kolom No -->
+                    <th class="py-2 px-3">Tanggal</th>
+                    <th class="py-2 px-3">Judul</th>
+                    <th class="py-2 px-3">Dompet</th>
+                    <th class="py-2 px-3">Kategori</th>
+                    <th class="py-2 px-3 text-right">Nominal</th>
+                    <th class="py-2 px-2 text-center no-print">Aksi</th>
+                </tr>
+            </thead>
+
                 <tbody id="txTableBody">
                     <!-- Data dimasukkan oleh JS -->
                 </tbody>
@@ -1480,7 +1483,7 @@ let recurrings = JSON.parse(localStorage.getItem('keuanganku_recurrings')) || [
 
         // Render Rows
         let rowsHtml = '';
-        filtered.forEach(t => {
+        filtered.forEach((t, index) => {
             const isIncome = t.jenis === "Pemasukan" || t.jenis === "Transfer In";
             const displayJudul = t.judul || t.title || t.catatan || 'Tanpa Judul';
             const displayDompet = t.dompet || t.wallet || 'Tunai / Cash';
@@ -1488,36 +1491,39 @@ let recurrings = JSON.parse(localStorage.getItem('keuanganku_recurrings')) || [
             const displayTanggal = t.tanggal || '-';
             const badgeClass = typeof getDompetBadgeClass === 'function' ? getDompetBadgeClass(displayDompet) : 'bg-gray-800 text-gray-300';
 
-        rowsHtml += `
-            <tr class="hover:bg-white/5 transition border-b border-gray-800/40">
-                <td class="py-3 px-3 whitespace-nowrap text-gray-400 font-mono text-[11px]">${displayTanggal}</td>
-                <td class="py-3 px-3 font-semibold text-gray-200">${displayJudul}</td>
-                <td class="py-3 px-3">
-                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-md ${badgeClass}" style="color: var(--wallet-text, inherit);">
-    ${displayDompet}
-</span>
-                </td>
-                <td class="py-3 px-3">
-                    <span class="text-[10px] bg-gray-500/10 border border-gray-400/30 px-2 py-0.5 rounded-full text-gray-300">${displayKategori}</span>
-                </td>
-                <td class="py-3 px-3 text-right font-bold font-mono ${isIncome ? 'text-emerald-500' : 'text-rose-500'}">
-                    ${isIncome ? '+' : '-'} ${typeof formatRp === 'function' ? formatRp(t.nominal || 0) : t.nominal}
-                </td>
-                <td class="py-3 px-2 text-center no-print">
-                    <div class="flex items-center justify-center gap-1.5">
-                        <button onclick="editTransaction('${t.id}')" title="Edit" class="text-blue-500 hover:text-blue-400 p-1">
-                            <i class="fa-solid fa-pen-to-square"></i>
-                        </button>
-                        <button onclick="deleteTransaction('${t.id}')" title="Hapus" class="text-rose-500 hover:text-rose-400 p-1">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `;
-    });
+    rowsHtml += `
+        <tr class="hover:bg-white/5 transition border-b border-gray-800/40">
+            <!-- 🟢 Nomor Urut Otomatis -->
+            <td class="py-3 px-3 text-center text-gray-400 font-mono text-[11px]">${index + 1}</td>
+            <td class="py-3 px-3 whitespace-nowrap text-gray-400 font-mono text-[11px]">${displayTanggal}</td>
+            <td class="py-3 px-3 font-semibold text-gray-200">${displayJudul}</td>
+            <td class="py-3 px-3">
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-md ${badgeClass}" style="color: var(--wallet-text, inherit);">
+                    ${displayDompet}
+                </span>
+            </td>
+            <td class="py-3 px-3">
+                <!-- 🟢 Class badge-kategori dipasang di sini -->
+                <span class="badge-kategori text-[10px] font-medium px-2 py-0.5 rounded-full">${displayKategori}</span>
+            </td>
+            <td class="py-3 px-3 text-right font-bold font-mono ${isIncome ? 'text-emerald-500' : 'text-rose-500'}">
+                ${isIncome ? '+' : '-'} ${typeof formatRp === 'function' ? formatRp(t.nominal || 0) : t.nominal}
+            </td>
+            <td class="py-3 px-2 text-center no-print">
+                <div class="flex items-center justify-center gap-1.5">
+                    <button onclick="editTransaction('${t.id}')" title="Edit" class="text-blue-500 hover:text-blue-400 p-1">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                    </button>
+                    <button onclick="deleteTransaction('${t.id}')" title="Hapus" class="text-rose-500 hover:text-rose-400 p-1">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `;
+});
 
-    tbody.innerHTML = rowsHtml;
+tbody.innerHTML = rowsHtml;
 }
 
         function deleteTransaction(id) {
