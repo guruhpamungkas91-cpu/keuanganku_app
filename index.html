@@ -639,16 +639,24 @@ html.dark td span.badge-kategori,
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- KARTU KIRI (Perbandingan Pemasukan & Pengeluaran) -->
-                <div class="card p-4 rounded-xl shadow-lg">
-                    <h3 class="text-lg font-semibold mb-1">Perbandingan Pemasukan & Pengeluaran</h3>
-                    <p class="text-xs text-gray-500 mb-4">Statistik tren keuangan di bulan ini</p>
-    
-                <!-- Wadah Chart Bar 3D -->
-                <div class="w-full h-72" id="chartPerbandingan3D"></div>
-                </div>
-            </div>
+            <!-- BUNGKUS DENGAN GRID AGAR SEBELAHAN -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+
+            <!-- KARTU KIRI: BAR CHART 3D -->
+            <div class="card p-4 rounded-xl shadow-lg">
+                <h3 class="text-lg font-semibold mb-1">Perbandingan Pemasukan & Pengeluaran</h3>
+                <p class="text-xs text-gray-500 mb-2">Statistik tren keuangan di bulan ini</p>
+            <div class="w-full h-80" id="chartPerbandingan3D"></div>
+        </div>
+
+            <!-- KARTU KANAN: PIE DONUT 3D -->
+            <div class="card p-4 rounded-xl shadow-lg">
+                <h3 class="text-lg font-semibold mb-1">PROPORSI PENGELUARAN PER KATEGORI</h3>
+                <p class="text-xs text-gray-500 mb-2">Persentase mana yang menyedot pengeluaran terbanyak</p>
+        <div class="w-full h-80" id="chartProporsi3D"></div>
+    </div>
+
+</div>
 
                 <div class="card-custom p-5 rounded-2xl border shadow-sm space-y-2">
                 <div>
@@ -1389,31 +1397,33 @@ let recurrings = JSON.parse(localStorage.getItem('keuanganku_recurrings')) || [
     }
 }
         function renderBarChart3D() {
-        // 1. Hitung total Pemasukan dan Pengeluaran untuk bulan aktif
+        if (!document.getElementById('chartPerbandingan3D')) return;
+
+        // 1. Hitung total Pemasukan dan Pengeluaran
             const currentTxs = transactions.filter(t => t.tanggal && t.tanggal.startsWith(selectedPeriod));
     
         let totalPemasukan = 0;
-        let totalPengeluaran = 0;
+         let totalPengeluaran = 0;
 
         currentTxs.forEach(t => {
             const nominal = parseFloat(t.nominal) || 0;
         if (t.jenis.startsWith("Pemasukan") || t.jenis === "Pemasukan") {
             totalPemasukan += nominal;
-        } else if (t.jenis.startsWith("Pengeluaran") || t.jenis === "Pengeluaran") {
+        } else if (t.jenis.startsWith("Pengeluaran") || t.jenis === "Pengeluaran Harian" || t.jenis === "Pengeluaran Tetap" || t.jenis === "Pengeluaran Lainnya") {
             totalPengeluaran += nominal;
         }
     });
 
-    // 2. Render Highcharts Column 3D
+    // 2. Render Highcharts Column 3D Manis
     Highcharts.chart('chartPerbandingan3D', {
         chart: {
             type: 'column',
             backgroundColor: 'transparent',
             options3d: {
                 enabled: true,
-                alpha: 15,   // Sudut Kemiringan Ke Atas
-                beta: 15,    // Sudut Putar Samping (Efek 3D Timbul)
-                depth: 50,   // Kedalaman ruang 3D
+                alpha: 10,   // Kemiringan vertikal halus
+                beta: 0,     // Dibuat 0 agar sejajar & tidak miring meliuk
+                depth: 35,   // Ketebalan 3D yang lebih tipis/elegan
                 viewDistance: 25
             }
         },
@@ -1436,27 +1446,38 @@ let recurrings = JSON.parse(localStorage.getItem('keuanganku_recurrings')) || [
             labels: {
                 style: { color: getChartTextColor() },
                 formatter: function () {
-                    return 'Rp ' + (this.value / 1000).toLocaleString() + 'k';
+                    return 'Rp ' + (this.value / 1000).toLocaleString('id-ID') + 'k';
                 }
             }
         },
         tooltip: {
-            headerFormat: '<b>{point.key}</b><br/>',
-            pointFormat: 'Total: <b>Rp {point.y:,.0f}</b>'
+            pointFormat: '{series.name}: <b>Rp {point.y:,.0f}</b>'
         },
         plotOptions: {
             column: {
-                depth: 40,            // Ketebalan batang 3D
-                colorByPoint: true,   // Warna beda tiap batang (Hijau & Merah)
+                depth: 30,             // Ketebalan fisik batang
+                groupZPadding: 10,
+                colorByPoint: true,
+                borderRadius: 4,       // Lengkungan halus di ujung atas batang
+                pointPadding: 0.2,     // Jarak antar batang
+                groupPadding: 0.25,    // Lebar ideal batang
                 dataLabels: {
-                    enabled: false
+                    enabled: true,     // Menampilkan nominal singkat di atas batang
+                    formatter: function() {
+                        return 'Rp ' + (this.y / 1000).toLocaleString('id-ID') + 'k';
+                    },
+                    style: {
+                        color: getChartTextColor(),
+                        fontSize: '10px',
+                        fontWeight: 'bold'
+                    }
                 }
             }
         },
-        colors: ['#10B981', '#EF4444'], // [Pemasukan (Hijau), Pengeluaran (Merah)]
-        legend: { enabled: false },     // Sembunyikan legenda karena X-Axis sudah jelas
+        colors: ['#10B981', '#EF4444'], // Hijau Emerald & Merah Soft
+        legend: { enabled: false },
         series: [{
-            name: 'Nominal',
+            name: 'Total',
             data: [totalPemasukan, totalPengeluaran]
         }]
     });
