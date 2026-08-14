@@ -14,6 +14,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
+
     /* Otomatis atur warna teks badge dompet: gelap di light mode, putih di dark mode */
     html:not(.dark) td span[class*="bg-"] {
         color: #0f172a !important; /* Warna gelap tegas untuk mode terang */
@@ -1021,6 +1022,12 @@ html.dark td span.badge-kategori,
     <div id="toastContainer" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
 
     <script>
+        const SUPABASE_URL = "https://fsqdzjfdbnlqxvtwnpch.supabase.co";
+        // Tempelkan anon public key yang kamu ambil dari Project Settings > API tadi
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzcWR6amZkYm5scXh2dHducGNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY2NzIzMDcsImV4cCI6MjEwMjI0ODMwN30.6IdTOSq0EQnGVrWJkWGe3biNOy73c85xuVdLg_gCg6Y"; 
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        let currentUser = null;
+
         const CATEGORIES = {
             "Pemasukan": ["Gaji", "Bonus/Sampingan", "Bisnis", "Transfer Masuk", "Lainnya"],
             "Pengeluaran Tetap": ["Sewa Kost/Kontrakan", "Wifi/Internet", "Listrik & Air", "Cicilan / Paylater", "Asuransi", "Lainnya"],
@@ -1074,7 +1081,29 @@ let recurrings = JSON.parse(localStorage.getItem('keuanganku_recurrings')) || [
         let chartProp = null;
         let chartAnnual = null;
 
+        let isLoginMode = true;
+
+        // Jangan lupa pastikan isi fungsi-fungsi ini ada (bukan sekadar titik-titik {...})
+        function toggleAuthMode() {
+            // isi fungsi toggle
+        }
+        async function handleAuthSubmit(e) {
+            // isi fungsi submit
+        }
+        async function fetchTransactionsFromCloud() {
+            // isi fungsi fetch
+        }
+        async function saveTransactionToCloud(newTx) {
+            // isi fungsi save
+        }
+        async function checkAuthSession() {
+            // isi fungsi check auth
+        }
+        
         window.onload = function() {
+            // Panggil pemeriksaan session Supabase saat halaman selesai dimuat
+            checkAuthSession();
+
             document.getElementById('currentPeriod').value = selectedPeriod;
             document.getElementById('txTanggal').value = new Date().toISOString().split('T')[0];
             
@@ -3125,5 +3154,38 @@ let myFinancialChart = null; // Variabel penyimpan instance chart biar bisa di-d
 }
 
     </script>
+        <!-- MODAL AUTHENTICATION -->
+<div id="authModal" class="fixed inset-0 bg-slate-900/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+        <div class="text-center mb-6">
+            <h2 id="authTitle" class="text-2xl font-bold text-white mb-2">Login ke KeuanganKu</h2>
+            <p id="authSubtitle" class="text-slate-400 text-sm">Masukkan email & password akun kamu</p>
+        </div>
+
+        <form onsubmit="handleAuthSubmit(event)" class="space-y-4">
+            <div>
+                <label class="block text-slate-300 text-sm font-medium mb-1">Email</label>
+                <input type="email" id="authEmail" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-blue-500" placeholder="nama@email.com">
+            </div>
+            <div>
+                <label class="block text-slate-300 text-sm font-medium mb-1">Password</label>
+                <input type="password" id="authPassword" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-blue-500" placeholder="••••••••">
+            </div>
+            <button type="submit" id="authSubmitBtn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition duration-200">
+                Masuk
+            </button>
+        </form>
+
+        <div class="mt-6 text-center text-sm text-slate-400">
+            <span id="authToggleText">Belum punya akun?</span>
+            <button onclick="toggleAuthMode()" id="authToggleBtn" class="text-blue-400 font-semibold hover:underline ml-1">
+                Daftar Sekarang
+            </button>
+        </div>
+    </div>
+</div>
+
+    <!-- PANGGUL FILE SCRIPT UTAMA KAMU DI SINI -->
+    <script type="module" src="/src/main.jsx"></script> 
 </body>
 </html>
