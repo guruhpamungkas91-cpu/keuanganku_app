@@ -1086,15 +1086,15 @@ let recurrings = JSON.parse(localStorage.getItem('keuanganku_recurrings')) || [
 
         let isLoginMode = true;
 
-// 1. Fungsi Toggle antara Login dan Daftar
-function toggleAuthMode() {
-    isLoginMode = !isLoginMode;
+    // 1. Fungsi Toggle antara Login dan Daftar
+    function toggleAuthMode() {
+        isLoginMode = !isLoginMode;
     
-    const title = document.getElementById('authTitle');
-    const subtitle = document.getElementById('authSubtitle');
-    const submitBtn = document.getElementById('authSubmitBtn');
-    const toggleText = document.getElementById('authToggleText');
-    const fullNameGroup = document.getElementById('fullNameGroup'); // Jika ada input Nama Lengkap
+        const title = document.getElementById('authTitle');
+        const subtitle = document.getElementById('authSubtitle');
+        const submitBtn = document.getElementById('authSubmitBtn');
+        const toggleText = document.getElementById('authToggleText');
+        const fullNameGroup = document.getElementById('fullNameGroup'); // Jika ada input Nama Lengkap
 
     if (!isLoginMode) {
         if (title) title.innerText = 'Daftar Akun KeuanganKu';
@@ -1114,6 +1114,21 @@ function toggleAuthMode() {
         }
     }
 }
+    function closeAuthModal() {
+        const modal = document.getElementById('authModal');
+    if (modal) {
+        modal.classList.add('hidden'); // Sembunyikan modal login setelah berhasil
+    }
+}
+
+    async function handleLogout() {
+    await supabaseClient.auth.signOut();
+    alert('Berhasil Logout');
+    location.reload(); // Refresh halaman agar kembali ke modal login
+}
+    <button onclick="handleLogout()" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-4 py-2 rounded-xl text-sm font-medium transition">
+    <i class="fa-solid fa-right-from-bracket mr-1.5"></i> Logout
+    </button>
 
 // 2. Fungsi Submit (Login & Register ke Supabase)
 async function handleAuthSubmit(e) {
