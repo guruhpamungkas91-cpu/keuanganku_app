@@ -224,7 +224,7 @@ html.dark td span.badge-kategori,
             <i class="fa-solid fa-right-from-bracket mr-1.5"></i> Logout
         </button>
     </header>
-    
+
     <header class="card-custom sticky top-0 z-30 border-b px-4 py-3 shadow-md mb-6">
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
             
@@ -1126,7 +1126,13 @@ let recurrings = JSON.parse(localStorage.getItem('keuanganku_recurrings')) || [
     function closeAuthModal() {
         const modal = document.getElementById('authModal');
     if (modal) {
-        modal.classList.add('hidden'); // Sembunyikan modal login setelah berhasil
+        modal.style.display = 'none'; // Memaksa modal langsung hilang dari layar
+    }
+}
+    function openAuthModal() {
+        const modal = document.getElementById('authModal');
+    if (modal) {
+        modal.style.display = 'flex'; // Tampilkan modal
     }
 }
 
