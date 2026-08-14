@@ -7,6 +7,15 @@ body {
     letter-spacing: -0.01em;
 }
 
+/* Taruh kode penimpa autofill di paling bawah di sini: */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus {
+    -webkit-text-fill-color: #ffffff !important;
+    -webkit-box-shadow: 0 0 0px 1000px #0f172a inset !important;
+    transition: background-color 5000s ease-in-out 0s;
+}
+
 /* Terapkan JetBrains Mono khusus untuk angka nominal / rupiah */
 .font-mono, [id^="laporan"], [class*="nominal"] {
     font-family: 'JetBrains Mono', monospace !important;

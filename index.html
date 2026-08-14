@@ -3303,21 +3303,21 @@ let myFinancialChart = null; // Variabel penyimpan instance chart biar bisa di-d
         <form onsubmit="handleAuthSubmit(event)" class="space-y-4">
     <div>
         <label class="block text-slate-300 text-sm font-medium mb-1">Email</label>
-        <!-- Tambahkan text-white & class pembersih autofill -->
         <input type="email" id="authEmail" required 
-            class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-blue-500 placeholder-slate-500" 
+            style="color: #ffffff !important; background-color: #0f172a !important;"
+            class="w-full border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-blue-500 placeholder-slate-500" 
             placeholder="nama@email.com">
     </div>
 
     <div>
         <label class="block text-slate-300 text-sm font-medium mb-1">Password</label>
         <div class="relative">
-            <!-- Tambahkan text-white agar karakter bulatan password berwarna putih terang -->
+            <!-- Tambahkan inline style color & background-color !important -->
             <input type="password" id="authPassword" required 
-                class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-4 pr-10 py-2.5 text-white focus:outline-none focus:border-blue-500 placeholder-slate-500" 
+                style="color: #ffffff !important; background-color: #0f172a !important;"
+                class="w-full border border-slate-700 rounded-xl pl-4 pr-10 py-2.5 text-white focus:outline-none focus:border-blue-500 placeholder-slate-500" 
                 placeholder="••••••••">
             
-            <!-- Tombol Icon Mata (Intip Password) -->
             <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition">
                 <i id="passwordEyeIcon" class="fa-solid fa-eye"></i>
             </button>
