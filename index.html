@@ -1123,14 +1123,17 @@ let recurrings = JSON.parse(localStorage.getItem('keuanganku_recurrings')) || [
         }
     }
 }
-    function closeAuthModal() {
-        const modal = document.getElementById('authModal');
+    // 1. Fungsi Tutup Modal
+function closeAuthModal() {
+    const modal = document.getElementById('authModal');
     if (modal) {
-        modal.style.display = 'none'; // Memaksa modal langsung hilang dari layar
+        modal.style.display = 'none'; // Sembunyikan modal secara paksa
     }
 }
-    function openAuthModal() {
-        const modal = document.getElementById('authModal');
+
+// 2. Fungsi Buka Modal
+function openAuthModal() {
+    const modal = document.getElementById('authModal');
     if (modal) {
         modal.style.display = 'flex'; // Tampilkan modal
     }
@@ -1145,49 +1148,77 @@ let recurrings = JSON.parse(localStorage.getItem('keuanganku_recurrings')) || [
     <i class="fa-solid fa-right-from-bracket mr-1.5"></i> Logout
     </button>
 
-// 2. Fungsi Submit (Login & Register ke Supabase)
+// 3. Fungsi Handle Submit Auth (Login / Register)
 async function handleAuthSubmit(e) {
-    if (e) e.preventDefault();
-    
-    const email = document.getElementById('authEmail').value.trim();
-    const password = document.getElementById('authPassword').value;
-    const submitBtn = document.getElementById('authSubmitBtn');
-
-    if (!email || !password) {
-        alert('Email dan password tidak boleh kosong!');
-        return;
+    // STOP form dari reload halaman bawaan browser
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
     }
 
-    submitBtn.innerText = 'Memproses...';
-    submitBtn.disabled = true;
+    const emailInput = document.getElementById('authEmail');
+    const passwordInput = document.getElementById('authPassword');
+    const submitBtn = document.getElementById('authSubmitBtn');
+
+    if (!emailInput || !passwordInput) {
+        alert('Input email/password tidak ditemukan di HTML!');
+        return false;
+    }
+
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+
+    if (!email || !password) {
+        alert('Email dan Password wajib diisi!');
+        return false;
+    }
+
+    if (submitBtn) {
+        submitBtn.innerText = 'Memproses...';
+        submitBtn.disabled = true;
+    }
 
     try {
         if (isLoginMode) {
-            // Proses Login
+            // PROSES LOGIN
             const { data, error } = await supabaseClient.auth.signInWithPassword({
                 email: email,
                 password: password
             });
+
             if (error) throw error;
+
+            // JIKA LOGIN BERHASIL:
             alert('Login Berhasil!');
-            closeAuthModal();
-            fetchTransactionsFromCloud();
+            closeAuthModal(); // <--- TUTUP MODAL
+            
+            // Muat data jika fungsinya ada
+            if (typeof fetchTransactionsFromCloud === 'function') {
+                await fetchTransactionsFromCloud();
+            }
+
         } else {
-            // Proses Register (Daftar)
+            // PROSES REGISTER
             const { data, error } = await supabaseClient.auth.signUp({
                 email: email,
                 password: password
             });
+
             if (error) throw error;
-            alert('Pendaftaran Berhasil! Silakan cek email kamu untuk konfirmasi atau langsung login.');
-            toggleAuthMode(); // Pindah ke layar login
+
+            alert('Pendaftaran Berhasil! Silakan Login.');
+            toggleAuthMode();
         }
     } catch (err) {
         alert('Gagal: ' + err.message);
     } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerText = isLoginMode ? 'Masuk' : 'Daftar Sekarang';
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerText = isLoginMode ? 'Masuk' : 'Daftar Sekarang';
+        }
     }
+
+    return false;
 }
 
 // 3. Fungsi Ambil Transaksi dari Supabase Cloud
@@ -1239,15 +1270,24 @@ async function checkAuthSession() {
     try {
         const { data: { session } } = await supabaseClient.auth.getSession();
         if (session) {
-            console.log('User sudah terautentikasi:', session.user.email);
-            fetchTransactionsFromCloud();
+            console.log('User sudah login:', session.user.email);
+            closeAuthModal(); // Tutup modal jika user sudah punya session
+            if (typeof fetchTransactionsFromCloud === 'function') {
+                await fetchTransactionsFromCloud();
+            }
         } else {
             console.log('User belum login');
+            openAuthModal(); // Tampilkan modal jika belum login
         }
     } catch (err) {
-        console.error('Gagal cek sesi auth:', err.message);
+        console.error('Gagal cek sesi:', err.message);
     }
 }
+
+// Jalankan otomatis saat web dimuat
+document.addEventListener('DOMContentLoaded', () => {
+    checkAuthSession();
+});
 
 // 6. Jalankan fungsi saat halaman dimuat
 window.onload = function() {
