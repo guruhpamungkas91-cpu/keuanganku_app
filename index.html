@@ -1242,6 +1242,21 @@ window.onload = function() {
     if (typeof renderAll === 'function') renderAll();
 };
 
+    function togglePasswordVisibility() {
+        const passwordInput = document.getElementById('authPassword');
+        const eyeIcon = document.getElementById('passwordEyeIcon');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            eyeIcon.classList.remove('fa-eye');
+            eyeIcon.classList.add('fa-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            eyeIcon.classList.remove('fa-eye-slash');
+            eyeIcon.classList.add('fa-eye');
+        }
+    }
+
         // ==========================================
         // 2. FUNGSI PENYIMPANAN DATA (LOCALSTORAGE)
         // ==========================================
@@ -3286,18 +3301,33 @@ let myFinancialChart = null; // Variabel penyimpan instance chart biar bisa di-d
         </div>
 
         <form onsubmit="handleAuthSubmit(event)" class="space-y-4">
-            <div>
-                <label class="block text-slate-300 text-sm font-medium mb-1">Email</label>
-                <input type="email" id="authEmail" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-blue-500" placeholder="nama@email.com">
-            </div>
-            <div>
-                <label class="block text-slate-300 text-sm font-medium mb-1">Password</label>
-                <input type="password" id="authPassword" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-blue-500" placeholder="••••••••">
-            </div>
-            <button type="submit" id="authSubmitBtn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition duration-200">
-                Masuk
+    <div>
+        <label class="block text-slate-300 text-sm font-medium mb-1">Email</label>
+        <!-- Tambahkan text-white & class pembersih autofill -->
+        <input type="email" id="authEmail" required 
+            class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-blue-500 placeholder-slate-500" 
+            placeholder="nama@email.com">
+    </div>
+
+    <div>
+        <label class="block text-slate-300 text-sm font-medium mb-1">Password</label>
+        <div class="relative">
+            <!-- Tambahkan text-white agar karakter bulatan password berwarna putih terang -->
+            <input type="password" id="authPassword" required 
+                class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-4 pr-10 py-2.5 text-white focus:outline-none focus:border-blue-500 placeholder-slate-500" 
+                placeholder="••••••••">
+            
+            <!-- Tombol Icon Mata (Intip Password) -->
+            <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition">
+                <i id="passwordEyeIcon" class="fa-solid fa-eye"></i>
             </button>
-        </form>
+        </div>
+    </div>
+
+    <button type="submit" id="authSubmitBtn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition duration-200">
+        Masuk
+    </button>
+</form>
 
         <div class="mt-6 text-center text-sm text-slate-400">
             <p class="text-xs text-gray-400 mt-4 text-center">
