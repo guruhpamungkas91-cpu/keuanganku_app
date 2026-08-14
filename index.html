@@ -496,7 +496,6 @@ html.dark td span.badge-kategori,
 
         <div id="transactionListContainer" class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
-                <thead>
                     <thead>
                 <tr class="text-[11px] font-semibold text-gray-400 uppercase border-b border-gray-800/80">
                     <th class="py-2 px-3 text-center">No</th> <!-- 🟢 Tambahkan Kolom No -->
@@ -1025,8 +1024,12 @@ html.dark td span.badge-kategori,
         const SUPABASE_URL = "https://fsqdzjfdbnlqxvtwnpch.supabase.co";
         // Tempelkan anon public key yang kamu ambil dari Project Settings > API tadi
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzcWR6amZkYm5scXh2dHducGNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY2NzIzMDcsImV4cCI6MjEwMjI0ODMwN30.6IdTOSq0EQnGVrWJkWGe3biNOy73c85xuVdLg_gCg6Y"; 
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        let currentUser = null;
+        let supabaseClient = null;
+    if (typeof supabase !== 'undefined') {
+        supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    } else {
+        console.warn("Supabase SDK belum terload dengan sempurna.");
+    }
 
         const CATEGORIES = {
             "Pemasukan": ["Gaji", "Bonus/Sampingan", "Bisnis", "Transfer Masuk", "Lainnya"],
@@ -1673,39 +1676,36 @@ let recurrings = JSON.parse(localStorage.getItem('keuanganku_recurrings')) || [
             const badgeClass = typeof getDompetBadgeClass === 'function' ? getDompetBadgeClass(displayDompet) : 'bg-gray-800 text-gray-300';
 
     rowsHtml += `
-        <tr class="hover:bg-white/5 transition border-b border-gray-800/40">
-            <!-- 🟢 No & Tanggal diperbesar ukurannya (text-sm & text-xs) -->
-            <td class="py-3 px-3 text-center text-gray-300 font-mono text-xs font-semibold">${index + 1}</td>
-            <td class="py-3 px-3 whitespace-nowrap text-gray-300 font-mono text-xs">${displayTanggal}</td>
-            
-            <td class="py-3 px-3 font-semibold text-gray-200">${displayJudul}</td>
-            <td class="py-3 px-3">
-                <span class="text-[10px] font-bold px-2 py-0.5 rounded-md ${badgeClass}" style="color: var(--wallet-text, inherit);">
-                    ${displayDompet}
-                </span>
-            </td>
-            <td class="py-3 px-3">
-                <span class="badge-kategori text-[10px] font-medium px-2 py-0.5 rounded-full">${displayKategori}</span>
-            </td>
-            <td class="py-3 px-3 text-right font-bold font-mono ${isIncome ? 'text-emerald-500' : 'text-rose-500'}">
-                ${isIncome ? '+' : '-'} ${typeof formatRp === 'function' ? formatRp(t.nominal || 0) : t.nominal}
-            </td>
-            <td class="py-3 px-2 text-center no-print">
-                <div class="flex items-center justify-center gap-1.5">
-                    <button onclick="editTransaction('${t.id}')" title="Edit" class="text-blue-500 hover:text-blue-400 p-1">
-                        <i class="fa-solid fa-pen-to-square"></i>
-                    </button>
-                    <button onclick="deleteTransaction('${t.id}')" title="Hapus" class="text-rose-500 hover:text-rose-400 p-1">
-                        <i class="fa-solid fa-trash"></i>
-                    </button>
-                </div>
-            </td>
-        </tr>
-    `;
-});
+                <tr class="hover:bg-white/5 transition border-b border-gray-800/40">
+                    <td class="py-3 px-3 text-center text-gray-300 font-mono text-xs font-semibold">${index + 1}</td>
+                    <td class="py-3 px-3 whitespace-nowrap text-gray-300 font-mono text-xs">${displayTanggal}</td>
+                    <td class="py-3 px-3 font-semibold text-gray-200">${displayJudul}</td>
+                    <td class="py-3 px-3">
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-md ${badgeClass}">
+                            ${displayDompet}
+                        </span>
+                    </td>
+                    <td class="py-3 px-3">
+                        <span class="badge-kategori text-[10px] font-medium px-2 py-0.5 rounded-full">${displayKategori}</span>
+                    </td>
+                    <td class="py-3 px-3 text-right font-bold font-mono ${isIncome ? 'text-emerald-500' : 'text-rose-500'}">
+                        ${isIncome ? '+' : '-'} ${typeof formatRp === 'function' ? formatRp(t.nominal || 0) : t.nominal}
+                    </td>
+                    <td class="py-3 px-2 text-center no-print">
+                        <div class="flex items-center justify-center gap-1.5">
+                            <button onclick="editTransaction('${t.id}')" class="p-1 hover:text-blue-400 transition" title="Edit">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                            <button onclick="deleteTransaction('${t.id}')" class="p-1 hover:text-rose-400 transition" title="Hapus">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>`;
+        });
 
-tbody.innerHTML = rowsHtml;
-}
+        tbody.innerHTML = rowsHtml;
+    }
 
         function deleteTransaction(id) {
         // Logika menghapus transaksi berdasarkan ID
@@ -1816,19 +1816,20 @@ tbody.innerHTML = rowsHtml;
         }
 
         function getDompetBadgeClass(dompet) {
-            switch(dompet) {
-                case 'Bank BCA': return 'badge-bca';
-                case 'BRI': return 'badge-bri';
-                case 'MANDIRI': return 'badge-mandiri';
-                case 'BSI': return 'badge-bsi';
-                case 'Seabank': return 'badge-seabank';
-                case 'ShopeePay': return 'badge-shopeepay';
-                case 'GoPay': return 'badge-gopay';
-                case 'DANA': return 'badge-dana';
-                case 'OVO': return 'badge-ovo';
-                default: return 'badge-cash';
-            }
-        }
+            const map = {
+        'Bank BCA': 'badge-bca',
+        'BRI': 'badge-bri',
+        'MANDIRI': 'badge-mandiri',
+        'BSI': 'badge-bsi',
+        'Seabank': 'badge-seabank',
+        'ShopeePay': 'badge-shopeepay',
+        'GoPay': 'badge-gopay',
+        'DANA': 'badge-dana',
+        'OVO': 'badge-ovo',
+        'Tunai / Cash': 'badge-cash'
+    };
+    return map[dompet] || 'badge-cash';
+}
 
         function saveTransaction(e) {
     if (e) e.preventDefault();
