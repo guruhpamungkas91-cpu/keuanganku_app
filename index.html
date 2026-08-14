@@ -1086,39 +1086,161 @@ let recurrings = JSON.parse(localStorage.getItem('keuanganku_recurrings')) || [
 
         let isLoginMode = true;
 
-        // Jangan lupa pastikan isi fungsi-fungsi ini ada (bukan sekadar titik-titik {...})
-        function toggleAuthMode() {
-            // isi fungsi toggle
-        }
-        async function handleAuthSubmit(e) {
-            // isi fungsi submit
-        }
-        async function fetchTransactionsFromCloud() {
-            // isi fungsi fetch
-        }
-        async function saveTransactionToCloud(newTx) {
-            // isi fungsi save
-        }
-        async function checkAuthSession() {
-            // isi fungsi check auth
-        }
-        
-        window.onload = function() {
-            // Panggil pemeriksaan session Supabase saat halaman selesai dimuat
-            checkAuthSession();
+// 1. Fungsi Toggle antara Login dan Daftar
+function toggleAuthMode() {
+    isLoginMode = !isLoginMode;
+    
+    const title = document.getElementById('authTitle');
+    const subtitle = document.getElementById('authSubtitle');
+    const submitBtn = document.getElementById('authSubmitBtn');
+    const toggleText = document.getElementById('authToggleText');
+    const fullNameGroup = document.getElementById('fullNameGroup'); // Jika ada input Nama Lengkap
 
-            document.getElementById('currentPeriod').value = selectedPeriod;
-            document.getElementById('txTanggal').value = new Date().toISOString().split('T')[0];
-            
-            const savedTheme = localStorage.getItem('keuanganku_theme') || 'dark-cyber';
-            switchTheme(savedTheme);
-            document.getElementById('themeSelector').value = savedTheme;
+    if (!isLoginMode) {
+        if (title) title.innerText = 'Daftar Akun KeuanganKu';
+        if (subtitle) subtitle.innerText = 'Buat akun baru untuk mulai mencatat keuangan';
+        if (submitBtn) submitBtn.innerText = 'Daftar Sekarang';
+        if (fullNameGroup) fullNameGroup.classList.remove('hidden');
+        if (toggleText) {
+            toggleText.innerHTML = `Sudah punya akun? <button type="button" onclick="toggleAuthMode()" class="text-blue-500 hover:underline font-semibold cursor-pointer">Login Di Sini</button>`;
+        }
+    } else {
+        if (title) title.innerText = 'Login ke KeuanganKu';
+        if (subtitle) subtitle.innerText = 'Masukkan email & password akun kamu';
+        if (submitBtn) submitBtn.innerText = 'Masuk';
+        if (fullNameGroup) fullNameGroup.classList.add('hidden');
+        if (toggleText) {
+            toggleText.innerHTML = `Belum punya akun? <button type="button" onclick="toggleAuthMode()" class="text-blue-500 hover:underline font-semibold cursor-pointer">Daftar Sekarang</button>`;
+        }
+    }
+}
 
-            updateCategoriesOptions();
-            populateFilterOptions();
-            populateBudgetKategoriSelect();
+// 2. Fungsi Submit (Login & Register ke Supabase)
+async function handleAuthSubmit(e) {
+    if (e) e.preventDefault();
+    
+    const email = document.getElementById('authEmail').value.trim();
+    const password = document.getElementById('authPassword').value;
+    const submitBtn = document.getElementById('authSubmitBtn');
+
+    if (!email || !password) {
+        alert('Email dan password tidak boleh kosong!');
+        return;
+    }
+
+    submitBtn.innerText = 'Memproses...';
+    submitBtn.disabled = true;
+
+    try {
+        if (isLoginMode) {
+            // Proses Login
+            const { data, error } = await supabaseClient.auth.signInWithPassword({
+                email: email,
+                password: password
+            });
+            if (error) throw error;
+            alert('Login Berhasil!');
+            closeAuthModal();
+            fetchTransactionsFromCloud();
+        } else {
+            // Proses Register (Daftar)
+            const { data, error } = await supabaseClient.auth.signUp({
+                email: email,
+                password: password
+            });
+            if (error) throw error;
+            alert('Pendaftaran Berhasil! Silakan cek email kamu untuk konfirmasi atau langsung login.');
+            toggleAuthMode(); // Pindah ke layar login
+        }
+    } catch (err) {
+        alert('Gagal: ' + err.message);
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = isLoginMode ? 'Masuk' : 'Daftar Sekarang';
+    }
+}
+
+// 3. Fungsi Ambil Transaksi dari Supabase Cloud
+async function fetchTransactionsFromCloud() {
+    try {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        if (!user) return;
+
+        const { data, error } = await supabaseClient
+            .from('transactions')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('tanggal', { ascending: false });
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+            transactions = data;
             renderAll();
-        };
+        }
+    } catch (err) {
+        console.error('Gagal mengambil data dari Cloud:', err.message);
+    }
+}
+
+// 4. Fungsi Simpan Transaksi Baru ke Supabase Cloud
+async function saveTransactionToCloud(newTx) {
+    try {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        if (!user) {
+            console.log('User tidak login, menyimpan secara lokal saja.');
+            return;
+        }
+
+        newTx.user_id = user.id;
+        const { error } = await supabaseClient
+            .from('transactions')
+            .insert([newTx]);
+
+        if (error) throw error;
+        console.log('Transaksi berhasil disimpan ke cloud!');
+    } catch (err) {
+        console.error('Gagal simpan ke cloud:', err.message);
+    }
+}
+
+// 5. Fungsi Cek Sesi Login Supabase
+async function checkAuthSession() {
+    try {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session) {
+            console.log('User sudah terautentikasi:', session.user.email);
+            fetchTransactionsFromCloud();
+        } else {
+            console.log('User belum login');
+        }
+    } catch (err) {
+        console.error('Gagal cek sesi auth:', err.message);
+    }
+}
+
+// 6. Jalankan fungsi saat halaman dimuat
+window.onload = function() {
+    checkAuthSession();
+
+    if (document.getElementById('currentPeriod')) {
+        document.getElementById('currentPeriod').value = selectedPeriod;
+    }
+    if (document.getElementById('txTanggal')) {
+        document.getElementById('txTanggal').value = new Date().toISOString().split('T')[0];
+    }
+    
+    const savedTheme = localStorage.getItem('keuanganku_theme') || 'dark-cyber';
+    if (typeof switchTheme === 'function') switchTheme(savedTheme);
+    if (document.getElementById('themeSelector')) {
+        document.getElementById('themeSelector').value = savedTheme;
+    }
+
+    if (typeof updateCategoriesOptions === 'function') updateCategoriesOptions();
+    if (typeof populateFilterOptions === 'function') populateFilterOptions();
+    if (typeof populateBudgetKategoriSelect === 'function') populateBudgetKategoriSelect();
+    if (typeof renderAll === 'function') renderAll();
+};
 
         // ==========================================
         // 2. FUNGSI PENYIMPANAN DATA (LOCALSTORAGE)
@@ -3178,10 +3300,12 @@ let myFinancialChart = null; // Variabel penyimpan instance chart biar bisa di-d
         </form>
 
         <div class="mt-6 text-center text-sm text-slate-400">
-            <span id="authToggleText">Belum punya akun?</span>
-            <button onclick="toggleAuthMode()" id="authToggleBtn" class="text-blue-400 font-semibold hover:underline ml-1">
-                Daftar Sekarang
-            </button>
+            <p class="text-xs text-gray-400 mt-4 text-center">
+            Belum punya akun? 
+            <button type="button" onclick="toggleAuthMode()" class="text-blue-500 hover:underline font-semibold cursor-pointer">
+            Daftar Sekarang
+        </button>
+</p>
         </div>
     </div>
 </div>
