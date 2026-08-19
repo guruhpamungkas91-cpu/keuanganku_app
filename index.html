@@ -2217,37 +2217,70 @@ function updateCategoriesOptions() {
         }
     }
 
-    // 2. Isi Opsi Kategori Sesuai Jenis Transaksi
-    if (katSelect) {
-        const currentSelected = katSelect.value;
-        katSelect.innerHTML = '';
+   // 2. Isi Opsi Kategori Sesuai Jenis Transaksi
+if (katSelect) {
+    const currentSelected = katSelect.value;
+    katSelect.innerHTML = '';
 
-        // Daftar Kategori Default
-        const defaultCategories = {
-            "Pemasukan": ["Gaji", "Bonus", "Investasi", "Penjualan", "Lainnya"],
-            "Pengeluaran Tetap": ["Sewa / Kontrakan", "Listrik & Air", "Internet / Pulsa", "Cicilan", "Asuransi"],
-            "Pengeluaran Harian": ["Makanan & Minuman", "Transportasi", "Rokok & Jajan", "Belanja Bulanan", "Hiburan"],
-            "Pengeluaran Lainnya": ["Sedekah", "Kesehatan", "Pendidikan", "Pajak", "Lain-Lain"],
-            "Transfer / Top Up": ["Transfer / Top Up"]
-        };
+    // Kategori terstruktur menggunakan Sub-Kelompok (Optgroup)
+    const structuredCategories = {
+        "Pemasukan": {
+            "Utama & Bisnis": ["Gaji", "Bonus / Sampingan", "Bisnis & Hasil Penjualan"],
+            "Pasif & Hadiah": ["Investasi & Dividen", "Hadiah & THR", "Cashback & Refund"],
+            "Lainnya": ["Transfer Masuk", "Lainnya"]
+        },
+        "Pengeluaran Harian": {
+            "Kebutuhan Pokok": ["Makanan & Minuman", "Kebutuhan Harian", "Transportasi & Bensin", "Parkir & Tol"],
+            "Grooming & Kesehatan": ["Perawatan Diri & Grooming", "Kesehatan & Medis"],
+            "Gaya Hidup": ["Rokok & Jajan", "Hewan Peliharaan (Pets)", "Lainnya"]
+        },
+        "Pengeluaran Tetap": {
+            "Hunian & Utilitas": ["Sewa Kost / Kontrakan", "Wifi / Internet", "Listrik & Air"],
+            "Tagihan & Finansial": ["Cicilan / Paylater", "Asuransi", "Langganan Digital (Subscription)"],
+            "Kewajiban Rutin": ["Nafkah Orang Tua / Keluarga", "Arisan & Iuran Lingkungan", "SPP / Biaya Pendidikan", "Lainnya"]
+        },
+        "Pengeluaran Lainnya": {
+            "Gaya Hidup & Hobi": ["Fashion & Aksesori", "Belanja Non Harian", "Hiburan & Rekreasi", "Hobi & Olahraga"],
+            "Pengembangan & Sosial": ["Pengembangan Diri", "Sedekah & Infaq", "Kado & Acara Khusus"],
+            "Lain-Lain": ["Servis & Perbaikan", "Zakat & Pajak", "Lainnya"]
+        },
+        "Transfer / Top Up": {
+            "Antar Rekening": ["Transfer / TopUp Antar Dompet"]
+        }
+    };
 
-        // Ambil dari variabel CATEGORIES jika ada, atau gunakan default
-        const list = (typeof CATEGORIES !== 'undefined' && CATEGORIES[jenis]) 
-            ? CATEGORIES[jenis] 
-            : (defaultCategories[jenis] || ["Lainnya"]);
+    // Placeholder petunjuk agar pengguna tidak bingung
+    const placeholderOpt = document.createElement('option');
+    placeholderOpt.value = '';
+    placeholderOpt.textContent = '-- Pilih Kategori --';
+    placeholderOpt.disabled = true;
+    placeholderOpt.selected = !currentSelected;
+    katSelect.appendChild(placeholderOpt);
 
-        list.forEach(k => {
+    // Ambil data kategori berdasarkan jenis transaksi yang dipilih
+    const categoriesData = structuredCategories[jenis] || { "Lainnya": ["Lainnya"] };
+
+    // Grouping Options ke dalam <optgroup>
+    Object.keys(categoriesData).forEach(groupName => {
+        const optGroup = document.createElement('optgroup');
+        optGroup.label = `── ${groupName} ──`; // Judul Sub-Kategori
+
+        categoriesData[groupName].forEach(k => {
             const opt = document.createElement('option');
             opt.value = k;
             opt.textContent = k;
-            katSelect.appendChild(opt);
+            optGroup.appendChild(opt);
         });
 
-        if (currentSelected && list.includes(currentSelected)) {
-            katSelect.value = currentSelected;
-        }
+        katSelect.appendChild(optGroup);
+    });
+
+    // Kembalikan nilai yang terpilih sebelumnya jika valid
+    if (currentSelected) {
+        katSelect.value = currentSelected;
     }
 }
+
         function resetForm() {
             const form = document.getElementById('txForm') || document.getElementById('transactionForm');
         if (form) form.reset();
